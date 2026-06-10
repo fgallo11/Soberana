@@ -4,6 +4,7 @@ import { CAPAS } from "./layers";
 import MapView from "./MapView";
 import EventLog from "./EventLog";
 import Metodologia from "./Metodologia";
+import PixelFlag from "./PixelFlag";
 
 type Pestania = "mapa" | "eventos" | "metodologia";
 
@@ -30,16 +31,19 @@ export default function App() {
     <div className="app">
       <header className="cabecera">
         <div className="marca">
-          <h1>Soberana</h1>
-          <span className="lema">qué pasa en el mar argentino — datos abiertos, sin publicidad, para siempre</span>
+          <PixelFlag escala={2} />
+          <div>
+            <h1>SOBERANA<span className="cursor">█</span></h1>
+            <span className="lema">&gt;&gt; qué pasa en el mar argentino · datos abiertos · sin publicidad · para siempre</span>
+          </div>
         </div>
         <nav className="pestanias">
-          <button className={pestania === "mapa" ? "activa" : ""} onClick={() => setPestania("mapa")}>Mapa</button>
+          <button className={pestania === "mapa" ? "activa" : ""} onClick={() => setPestania("mapa")}>[ MAPA ]</button>
           <button className={pestania === "eventos" ? "activa" : ""} onClick={() => setPestania("eventos")}>
-            Registro de eventos
+            [ EVENTOS ]
           </button>
           <button className={pestania === "metodologia" ? "activa" : ""} onClick={() => setPestania("metodologia")}>
-            Qué estás viendo (y qué no)
+            [ QUÉ ESTÁS VIENDO ]
           </button>
         </nav>
       </header>

@@ -24,6 +24,15 @@ export const CAPAS: CapaDef[] = [
     defaultOn: true,
   },
   {
+    id: "antartida",
+    grupo: "Soberanía",
+    titulo: "Antártida Argentina e islas",
+    descripcion: "Sector Antártico Argentino (25°O–74°O al sur del paralelo 60°S) e islas del Atlántico Sur.",
+    badge: "estático",
+    mapLayers: ["antartida-fill", "antartida-line", "antartida-label"],
+    defaultOn: true,
+  },
+  {
     id: "ficz",
     grupo: "Soberanía",
     titulo: "FICZ / FOCZ (Malvinas)",

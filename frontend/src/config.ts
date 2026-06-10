@@ -10,11 +10,18 @@ export const API_URL: string = (import.meta.env.VITE_API_URL as string | undefin
 
 export const HAY_BACKEND = API_URL !== "";
 
-/** Basemap: OpenFreeMap — vector tiles libres, sin API key, uso en producción permitido. */
-export const ESTILO_BASE = "https://tiles.openfreemap.org/styles/liberty";
+/** Vista inicial: todo el territorio — continente, Mar Argentino, islas del
+ * Atlántico Sur y Antártida Argentina. */
+export const VISTA_INICIAL = { center: [-55.0, -52.0] as [number, number], zoom: 2.9 };
 
-/** Centro inicial: el Mar Argentino completo, con la milla 201 a la vista. */
-export const VISTA_INICIAL = { center: [-58.5, -44.0] as [number, number], zoom: 3.6 };
+/** Límites de navegación: Argentina (con Antártida e islas) y una porción más.
+ * El usuario puede hacer zoom y paneo libremente dentro de esta caja. */
+export const LIMITES: [[number, number], [number, number]] = [
+  [-95.0, -85.0], // suroeste (lat -85: límite práctico de la proyección web mercator)
+  [-15.0, -10.0], // noreste
+];
+export const ZOOM_MIN = 2.4;
+export const ZOOM_MAX = 14;
 
 /** Latencia declarada por capa: el usuario SIEMPRE sabe qué tan viejo es el dato. */
 export type Badge = "en vivo" | "~24 h" | "72 h" | "~5 días" | "estático" | "horas";

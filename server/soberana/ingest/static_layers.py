@@ -94,6 +94,18 @@ PUERTOS = [
     ("Punta Quilla", -68.420, -50.120, "marítimo"), ("Ushuaia", -68.300, -54.810, "marítimo"),
 ]
 
+# Sector Antártico Argentino: entre los meridianos 25°O y 74°O al sur del
+# paralelo 60°S (recortado en 85°S por el límite de la proyección web mercator)
+SECTOR_ANTARTICO = [(-74.0, -60.0), (-25.0, -60.0), (-25.0, -85.0), (-74.0, -85.0), (-74.0, -60.0)]
+
+ISLAS_ATLANTICO_SUR = [
+    ("Islas Malvinas", -59.50, -51.70),
+    ("Islas Georgias del Sur", -36.50, -54.30),
+    ("Islas Sandwich del Sur", -26.50, -57.80),
+    ("Islas Orcadas del Sur", -45.40, -60.60),
+    ("Islas Shetland del Sur", -58.50, -62.10),
+]
+
 # Traza aproximada de la Vía Navegable Troncal (Corrientes → Recalada)
 HIDROVIA = [
     (-58.83, -27.47), (-58.80, -27.95), (-59.05, -28.50), (-59.26, -29.14),
@@ -165,6 +177,24 @@ def generar(out_dir: str | None = None) -> list[Path]:
     ]
     p = out / "amps.geojson"
     p.write_text(json.dumps(_fc(amps, descripcion="Áreas marinas protegidas y zonas de interés — geometrías aproximadas")))
+    escritos.append(p)
+
+    # --- Antártida Argentina e islas del Atlántico Sur ---
+    p = out / "antartida.geojson"
+    p.write_text(json.dumps(_fc(
+        [
+            _feature(Polygon(SECTOR_ANTARTICO),
+                     nombre="Sector Antártico Argentino", tipo="sector",
+                     detalle="Entre los meridianos 25°O y 74°O al sur del paralelo 60°S "
+                             "(recortado en 85°S por la proyección del mapa)"),
+            _feature(Point(-49.5, -74.0), nombre="ANTÁRTIDA ARGENTINA", tipo="etiqueta"),
+            *[
+                _feature(Point(lon, lat), nombre=n, tipo="isla")
+                for n, lon, lat in ISLAS_ATLANTICO_SUR
+            ],
+        ],
+        descripcion="Sector Antártico Argentino e islas del Atlántico Sur (cartografía oficial argentina)",
+    ), ensure_ascii=False))
     escritos.append(p)
 
     # --- Bases militares ---

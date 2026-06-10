@@ -1,7 +1,8 @@
 import maplibregl, { GeoJSONSource, Map as MLMap, Popup } from "maplibre-gl";
 import { useEffect, useRef } from "react";
-import { API_URL, ESTILO_BASE, HAY_BACKEND, VISTA_INICIAL } from "./config";
+import { API_URL, HAY_BACKEND, LIMITES, VISTA_INICIAL, ZOOM_MAX, ZOOM_MIN } from "./config";
 import { CAPAS } from "./layers";
+import { ESTILO_ESPIA } from "./map_style";
 
 const FUENTE_TEXTO = ["Noto Sans Regular"];
 
@@ -82,9 +83,12 @@ export default function MapView({ visibles, onDemo }: Props) {
     if (!contRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: contRef.current,
-      style: ESTILO_BASE,
+      style: ESTILO_ESPIA,
       center: VISTA_INICIAL.center,
       zoom: VISTA_INICIAL.zoom,
+      maxBounds: LIMITES,   // navegación limitada: Argentina (con Antártida e islas) y una porción más
+      minZoom: ZOOM_MIN,
+      maxZoom: ZOOM_MAX,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
@@ -105,6 +109,28 @@ export default function MapView({ visibles, onDemo }: Props) {
         id: "zee-line", type: "line", source: "zee",
         filter: ["==", ["get", "tipo"], "milla_200"],
         paint: { "line-color": "#4aa3ff", "line-width": 1.6, "line-dasharray": [4, 2] },
+      });
+
+      map.addSource("antartida", { type: "geojson", data: "/data/antartida.geojson" });
+      map.addLayer({
+        id: "antartida-fill", type: "fill", source: "antartida",
+        filter: ["==", ["get", "tipo"], "sector"],
+        paint: { "fill-color": "#75aadb", "fill-opacity": 0.06 },
+      });
+      map.addLayer({
+        id: "antartida-line", type: "line", source: "antartida",
+        filter: ["==", ["get", "tipo"], "sector"],
+        paint: { "line-color": "#75aadb", "line-width": 1.2, "line-dasharray": [5, 3], "line-opacity": 0.7 },
+      });
+      map.addLayer({
+        id: "antartida-label", type: "symbol", source: "antartida",
+        filter: ["in", ["get", "tipo"], ["literal", ["isla", "etiqueta"]]],
+        layout: {
+          "text-field": ["get", "nombre"], "text-font": FUENTE_TEXTO,
+          "text-size": ["case", ["==", ["get", "tipo"], "etiqueta"], 13, 10],
+          "text-transform": "uppercase", "text-letter-spacing": 0.15,
+        },
+        paint: { "text-color": "#75aadb", "text-halo-color": "#04131c", "text-halo-width": 1.2 },
       });
 
       map.addSource("ficz", { type: "geojson", data: "/data/ficz_focz.geojson" });
@@ -333,7 +359,12 @@ export default function MapView({ visibles, onDemo }: Props) {
     if (map && map.isStyleLoaded()) aplicarVisibilidad(map, visibles);
   }, [visibles]);
 
-  return <div ref={contRef} className="mapa" />;
+  return (
+    <div className="mapa-marco">
+      <div ref={contRef} className="mapa" />
+      <div className="crt-overlay" aria-hidden="true" />
+    </div>
+  );
 }
 
 function aplicarVisibilidad(map: MLMap, visibles: Record<string, boolean>) {
