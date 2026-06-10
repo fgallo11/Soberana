@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+soberana.db
+
+# Node
+node_modules/
+frontend/dist/
+
+# Entorno
+.env
+.env.local
+
+# SO / editores
+.DS_Store
+*.swp

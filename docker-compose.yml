@@ -1,0 +1,44 @@
+# Desarrollo local con Postgres real (opcional: sin docker, el server usa sqlite).
+#   docker compose up            → db + api
+#   docker compose --profile ais up   → además, el consumidor AIS en vivo (requiere API key)
+services:
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_USER: soberana
+      POSTGRES_PASSWORD: soberana
+      POSTGRES_DB: soberana
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soberana"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./server
+    environment:
+      SOBERANA_DATABASE_URL: postgresql+psycopg://soberana:soberana@db:5432/soberana
+      SOBERANA_GFW_API_TOKEN: ${SOBERANA_GFW_API_TOKEN:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn soberana.api.main:app --host 0.0.0.0 --port 8000
+
+  ais:
+    profiles: ["ais"]
+    build: ./server
+    environment:
+      SOBERANA_DATABASE_URL: postgresql+psycopg://soberana:soberana@db:5432/soberana
+      SOBERANA_AISSTREAM_API_KEY: ${SOBERANA_AISSTREAM_API_KEY:?falta SOBERANA_AISSTREAM_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python -m soberana.ingest.ais_live
+
+volumes:
+  dbdata:

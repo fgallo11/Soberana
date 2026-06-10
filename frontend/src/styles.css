@@ -1,0 +1,125 @@
+:root {
+  --fondo: #0d1117;
+  --panel: #161b22;
+  --borde: #2d333b;
+  --texto: #e6edf3;
+  --texto-suave: #9aa7b3;
+  --acento: #4aa3ff;
+  --alerta: #ff9f1a;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.app { display: flex; flex-direction: column; height: 100%; }
+
+/* ---------- cabecera ---------- */
+.cabecera {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.6rem 1rem; background: var(--panel); border-bottom: 1px solid var(--borde);
+  flex-wrap: wrap;
+}
+.marca h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.04em; }
+.marca .lema { font-size: 0.75rem; color: var(--texto-suave); }
+.pestanias { display: flex; gap: 0.4rem; }
+.pestanias button {
+  background: none; border: 1px solid var(--borde); color: var(--texto-suave);
+  padding: 0.35rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+}
+.pestanias button.activa { color: var(--texto); border-color: var(--acento); background: #1c2530; }
+
+/* ---------- banner demo ---------- */
+.banner-demo {
+  background: #3d2e08; color: #ffd166; border-bottom: 1px solid #6b5310;
+  padding: 0.45rem 1rem; font-size: 0.85rem;
+}
+
+/* ---------- cuerpo del mapa ---------- */
+.cuerpo { display: flex; flex: 1; min-height: 0; }
+.mapa { flex: 1; }
+
+.panel {
+  width: 320px; overflow-y: auto; background: var(--panel);
+  border-right: 1px solid var(--borde); padding: 0.8rem;
+}
+.panel h3 {
+  margin: 0.8rem 0 0.4rem; font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--texto-suave);
+}
+.panel section:first-child h3 { margin-top: 0; }
+
+.capa { display: block; padding: 0.45rem 0.3rem; border-radius: 6px; cursor: pointer; }
+.capa:hover { background: #1c2530; }
+.capa input { margin-right: 0.5rem; }
+.capa-titulo { font-size: 0.88rem; }
+.capa small { display: block; color: var(--texto-suave); font-size: 0.72rem; margin: 0.15rem 0 0 1.4rem; line-height: 1.35; }
+.capa.deshabilitada { opacity: 0.55; cursor: not-allowed; }
+
+.badge {
+  font-style: normal; font-size: 0.62rem; padding: 0.05rem 0.35rem; border-radius: 8px;
+  margin-left: 0.3rem; vertical-align: middle; border: 1px solid var(--borde); color: var(--texto-suave);
+}
+.b-envivo { color: #55efc4; border-color: #1d5c47; }
+.b-72h, .b-5das { color: #ffd166; border-color: #6b5310; }
+.b-24h, .b-horas { color: #81ecec; border-color: #1d4d5c; }
+
+.atribucion { font-size: 0.68rem; color: var(--texto-suave); margin-top: 1rem; line-height: 1.4; }
+
+/* ---------- popups ---------- */
+.maplibregl-popup-content { background: var(--panel); color: var(--texto); border: 1px solid var(--borde); border-radius: 8px; }
+.maplibregl-popup-tip { border-top-color: var(--panel) !important; }
+.maplibregl-popup-close-button { color: var(--texto-suave); }
+.pp h4 { margin: 0 0 0.4rem; font-size: 0.9rem; }
+.pp-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.78rem; padding: 0.1rem 0; }
+.pp-row span { color: var(--texto-suave); }
+.pp-nota { font-size: 0.72rem; color: #ffd166; margin: 0.45rem 0 0; line-height: 1.35; }
+
+/* ---------- registro de eventos ---------- */
+.log, .metodologia { max-width: 880px; margin: 0 auto; padding: 1.2rem 1rem 3rem; overflow-y: auto; }
+.log h2, .metodologia h2 { margin-top: 0.4rem; }
+.log-intro { color: var(--texto-suave); font-size: 0.9rem; line-height: 1.5; }
+.filtros { display: flex; gap: 0.6rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+.filtros select {
+  background: var(--panel); color: var(--texto); border: 1px solid var(--borde);
+  padding: 0.35rem 0.5rem; border-radius: 6px;
+}
+.conteo { color: var(--texto-suave); font-size: 0.8rem; }
+
+.evento {
+  background: var(--panel); border: 1px solid var(--borde); border-radius: 10px;
+  padding: 0.8rem 1rem; margin-bottom: 0.7rem; position: relative;
+}
+.evento.destacado { border-color: var(--alerta); }
+.evento header { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.3rem; }
+.evento h4 { margin: 0.2rem 0 0.5rem; }
+.tipo, .conf {
+  font-size: 0.68rem; padding: 0.1rem 0.5rem; border-radius: 10px; border: 1px solid var(--borde);
+  color: var(--texto-suave);
+}
+.t-ais_gap_gfw, .t-ais_gap_local { color: var(--alerta); border-color: #6b4310; }
+.t-demo { color: #ffd166; border-color: #6b5310; }
+.c-alta { color: #55efc4; border-color: #1d5c47; }
+.c-baja { color: var(--texto-suave); }
+.evento dl { display: flex; flex-wrap: wrap; gap: 0.3rem 1.6rem; margin: 0; }
+.evento dt { font-size: 0.68rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.05em; }
+.evento dd { margin: 0; font-size: 0.85rem; }
+.permalink { position: absolute; top: 0.8rem; right: 1rem; font-size: 0.72rem; color: var(--acento); }
+
+/* ---------- metodología ---------- */
+.metodologia section { margin-bottom: 1.4rem; }
+.metodologia h3 { font-size: 1rem; color: var(--acento); }
+.metodologia p, .metodologia li { font-size: 0.92rem; line-height: 1.6; color: var(--texto); }
+.metodologia a { color: var(--acento); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 760px) {
+  .cuerpo { flex-direction: column; }
+  .panel { width: 100%; max-height: 38vh; border-right: none; border-bottom: 1px solid var(--borde); }
+}

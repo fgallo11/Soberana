@@ -1,0 +1,81 @@
+# Ingesta batch: regenera los archivos de datos del frontend y los commitea.
+# Con Vercel conectado al repo, cada commit redespliega el sitio con datos frescos.
+# Costo: $0 (Actions es gratuito en repositorios públicos).
+#
+# Secrets a configurar en el repo (Settings → Secrets → Actions):
+#   GFW_API_TOKEN, EOG_USERNAME, EOG_PASSWORD  (todos opcionales: sin secret, ese job se saltea)
+name: Ingesta de datos
+
+on:
+  schedule:
+    - cron: "20 */6 * * *"   # cada 6 horas
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ingesta
+  cancel-in-progress: false
+
+jobs:
+  ingesta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar server
+        working-directory: server
+        run: pip install -e ".[geo]"
+
+      - name: Capas estáticas (siempre)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+        run: python -m soberana.ingest.static_layers
+
+      - name: Alturas del Paraná (Prefectura, sin token)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+        run: python -m soberana.ingest.alturas || echo "::warning::alturas falló (página de Prefectura caída o cambiada)"
+
+      - name: GFW (eventos + SAR)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+          SOBERANA_GFW_API_TOKEN: ${{ secrets.GFW_API_TOKEN }}
+          SOBERANA_DATABASE_URL: sqlite:///./ingesta.db
+        run: |
+          if [ -z "$SOBERANA_GFW_API_TOKEN" ]; then
+            echo "::notice::GFW_API_TOKEN no configurado: se mantienen los datos existentes"
+          else
+            python -m soberana.ingest.gfw todo
+          fi
+
+      - name: VIIRS (luces nocturnas)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+          SOBERANA_EOG_USERNAME: ${{ secrets.EOG_USERNAME }}
+          SOBERANA_EOG_PASSWORD: ${{ secrets.EOG_PASSWORD }}
+        run: |
+          if [ -z "$SOBERANA_EOG_USERNAME" ]; then
+            echo "::notice::EOG no configurado: se mantienen los datos existentes"
+          else
+            python -m soberana.ingest.viirs
+          fi
+
+      - name: Commitear datos actualizados
+        run: |
+          git config user.name "soberana-ingesta[bot]"
+          git config user.email "ingesta@users.noreply.github.com"
+          git add frontend/public/data/
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los datos."
+          else
+            git commit -m "datos: actualización automática $(date -u +'%Y-%m-%dT%H:%MZ')"
+            git push
+          fi
