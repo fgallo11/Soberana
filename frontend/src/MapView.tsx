@@ -11,8 +11,9 @@ interface Props {
   onDemo: () => void;
 }
 
-/** bbox aéreo (debe coincidir con el backend): continente + Malvinas + corredor */
-const BBOX_AEREO = { lonMin: -76, latMin: -56.5, lonMax: -50, latMax: -21 };
+/** bbox aéreo (debe coincidir con el backend): continente + Malvinas + corredor
+ * Atlántico Sur hasta Georgias/Sandwich */
+const BBOX_AEREO = { lonMin: -76, latMin: -58, lonMax: -25, latMax: -21 };
 
 function acAFeature(ac: any, mil: boolean) {
   return {
