@@ -46,6 +46,24 @@ def test_vessels_vacio_y_con_datos():
     assert r.status_code == 400
 
 
+def test_vessels_viaje_en_el_tiempo():
+    from datetime import timedelta
+    init_db()
+    hace_3h = utcnow() - timedelta(hours=3)
+    with get_engine().begin() as conn:
+        conn.execute(positions.insert().values(
+            mmsi="701000099", ts=hace_3h, lat=-33.0, lon=-59.0,
+        ))
+    # ahora (ventana 60 min): no aparece
+    r = client.get("/api/vessels", params={"bbox": "-60,-34,-58,-32"})
+    assert all(f["properties"]["mmsi"] != "701000099" for f in r.json()["features"])
+    # como se veía hace 3 horas: aparece
+    r = client.get("/api/vessels", params={"bbox": "-60,-34,-58,-32", "at": hace_3h.isoformat()})
+    assert any(f["properties"]["mmsi"] == "701000099" for f in r.json()["features"])
+    # at inválido
+    assert client.get("/api/vessels", params={"at": "ayer"}).status_code == 400
+
+
 def test_events():
     init_db()
     with get_engine().begin() as conn:

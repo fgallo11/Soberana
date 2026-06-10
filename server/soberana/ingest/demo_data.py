@@ -24,20 +24,23 @@ def generar(out_dir: str | None = None) -> list[Path]:
     ahora = utcnow()
     escritos = []
 
-    # Detecciones SAR demo: cluster sobre el borde de la milla 200 / Agujero Azul
+    # Detecciones SAR demo: 30 días con un cluster que deriva a lo largo del
+    # borde de la milla 200 / Agujero Azul (al retroceder en el tiempo se ve
+    # la flota "moverse")
     sar = []
-    for _ in range(60):
-        lon = rng.uniform(-61.0, -58.2)
-        lat = rng.uniform(-47.3, -43.8)
-        sar.append({
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [round(lon, 3), round(lat, 3)]},
-            "properties": {
-                "matched": rng.random() < 0.45,
-                "fecha": (ahora - timedelta(days=rng.randint(1, 6))).date().isoformat(),
-                "fuente": "DEMO",
-            },
-        })
+    for d in range(1, 31):
+        fecha = (ahora - timedelta(days=d)).date().isoformat()
+        centro_lat = -44.2 - (d % 15) * 0.22   # deriva sur-norte y vuelta
+        centro_lon = -59.6 - (d % 9) * 0.12
+        for _ in range(rng.randint(8, 18)):
+            sar.append({
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [
+                    round(centro_lon + rng.gauss(0, 0.55), 3),
+                    round(centro_lat + rng.gauss(0, 0.45), 3),
+                ]},
+                "properties": {"matched": rng.random() < 0.45, "fecha": fecha, "fuente": "DEMO"},
+            })
     p = out / "sar_detections.geojson"
     p.write_text(json.dumps({
         "type": "FeatureCollection",
@@ -47,16 +50,22 @@ def generar(out_dir: str | None = None) -> list[Path]:
     }, ensure_ascii=False))
     escritos.append(p)
 
-    # Luces VIIRS demo: la 'ciudad flotante' de poteros pegada a la milla 201
+    # Luces VIIRS demo: 14 noches de la 'ciudad flotante' de poteros, con el
+    # enjambre derivando noche a noche pegado a la milla 201
     viirs = []
-    for _ in range(120):
-        lon = rng.uniform(-60.8, -58.0)
-        lat = rng.uniform(-47.0, -44.0)
-        viirs.append({
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [round(lon, 3), round(lat, 3)]},
-            "properties": {"fecha": (ahora - timedelta(days=1)).date().isoformat(), "qf": "1", "fuente": "DEMO"},
-        })
+    for d in range(1, 15):
+        fecha = (ahora - timedelta(days=d)).date().isoformat()
+        centro_lat = -45.5 + (d % 7) * 0.18
+        centro_lon = -59.4 - (d % 5) * 0.15
+        for _ in range(rng.randint(60, 110)):
+            viirs.append({
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [
+                    round(centro_lon + rng.gauss(0, 0.5), 3),
+                    round(centro_lat + rng.gauss(0, 0.4), 3),
+                ]},
+                "properties": {"fecha": fecha, "qf": "1", "fuente": "DEMO"},
+            })
     p = out / "viirs_boats.geojson"
     p.write_text(json.dumps({
         "type": "FeatureCollection",

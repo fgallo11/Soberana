@@ -44,7 +44,7 @@ def _token(client: httpx.Client) -> str:
     return resp.json()["access_token"]
 
 
-def ingerir(dias: int = 3) -> Path:
+def ingerir(dias: int = 14) -> Path:
     """Baja los CSV diarios de VBD recientes y filtra al área de interés."""
     if not settings.eog_username:
         raise SystemExit("Faltan SOBERANA_EOG_USERNAME/PASSWORD — registro gratis en https://eogdata.mines.edu/")

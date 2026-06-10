@@ -118,12 +118,15 @@ def _guardar_eventos(eng, tipo: str, entries: list[dict]) -> int:
     return n
 
 
-def ingerir_sar(dias: int = 10) -> Path:
+def ingerir_sar(dias: int = 30) -> Path:
     """Detecciones SAR (Sentinel-1) vía 4Wings report → GeoJSON para el frontend.
 
     Cada feature trae `matched` (correlacionada con AIS) — las no matcheadas
     son los buques *dark*. La capa se rotula 'detección no correlacionada
     con AIS', nunca 'buque ilegal'.
+
+    Resolución temporal DIARIA: cada detección lleva su fecha, que es lo
+    que permite la barra de tiempo del frontend (ventana de 30 días).
     """
     hasta = utcnow().date()
     desde = hasta - timedelta(days=dias)
@@ -132,7 +135,7 @@ def ingerir_sar(dias: int = 10) -> Path:
             "/4wings/report",
             params={
                 "datasets[0]": "public-global-sar-presence:latest",
-                "temporal-resolution": "ENTIRE",
+                "temporal-resolution": "DAILY",
                 "spatial-resolution": "HIGH",
                 "format": "JSON",
                 "date-range": f"{desde},{hasta}",

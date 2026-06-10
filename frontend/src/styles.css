@@ -204,6 +204,43 @@ body {
 .metodologia a { color: var(--fosforo); }
 .metodologia b { color: var(--ambar); font-weight: normal; }
 
+/* ---------- barra de tiempo (videocasetera) ---------- */
+.mapa-zona { flex: 1; position: relative; display: flex; min-width: 0; }
+.timebar {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  z-index: 10; width: min(620px, calc(100% - 24px));
+  background: rgba(11, 19, 13, 0.94); border: 2px solid var(--borde);
+  box-shadow: 4px 4px 0 #000; padding: 0.5rem 0.8rem;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.9rem; align-items: center;
+}
+.tb-controles { display: flex; gap: 0.35rem; }
+.tb-controles button {
+  background: #000; border: 2px solid var(--borde-suave); color: var(--texto-suave);
+  font-family: var(--fuente-pixel); font-size: 0.55rem; padding: 0.32rem 0.5rem; cursor: pointer;
+}
+.tb-controles button:hover:not(:disabled) { color: var(--texto); border-color: var(--borde); }
+.tb-controles button:disabled { opacity: 0.35; cursor: not-allowed; }
+.tb-controles .tb-live.activo {
+  color: #04140a; background: var(--rojo); border-color: var(--rojo);
+  animation: latido 1.6s ease-in-out infinite;
+}
+@keyframes latido { 50% { filter: brightness(1.35); } }
+
+.timebar input[type="range"] {
+  width: 100%; accent-color: var(--fosforo); cursor: pointer; height: 1.1rem;
+}
+
+.tb-estado { display: flex; flex-direction: column; align-items: flex-end; min-width: 150px; }
+.tb-modo { font-family: var(--fuente-pixel); font-size: 0.55rem; }
+.tb-modo.vivo { color: var(--rojo); animation: parpadeo 1.4s steps(1) infinite; }
+.tb-modo.archivo { color: var(--ambar); }
+.tb-fecha { font-size: 1rem; color: var(--texto); }
+
+.tb-nota {
+  grid-column: 1 / -1; font-size: 0.85rem; color: var(--texto-suave);
+  border-top: 1px dashed var(--borde-suave); padding-top: 0.3rem;
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 760px) {
   .cuerpo { flex-direction: column; }

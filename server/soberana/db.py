@@ -119,14 +119,19 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def latest_positions(bbox=None, max_age_min: int = 60) -> list[dict]:
-    """Última posición de cada buque visto en los últimos `max_age_min` minutos."""
+def latest_positions(bbox=None, max_age_min: int = 60, at: datetime | None = None) -> list[dict]:
+    """Última posición de cada buque en la ventana de `max_age_min` minutos.
+
+    `at` permite viajar en el tiempo: posiciones "como se veían" a ese
+    instante (dentro de la retención hot de la DB). None = ahora.
+    """
     eng = get_engine()
-    cutoff = utcnow() - timedelta(minutes=max_age_min)
+    fin = at or utcnow()
+    cutoff = fin - timedelta(minutes=max_age_min)
     with eng.connect() as conn:
         sub = (
             select(positions.c.mmsi, func.max(positions.c.ts).label("ts"))
-            .where(positions.c.ts >= cutoff)
+            .where(positions.c.ts >= cutoff, positions.c.ts <= fin)
             .group_by(positions.c.mmsi)
             .subquery()
         )

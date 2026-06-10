@@ -7,6 +7,7 @@ las capas de GFW se sirven proxiadas por acá.
 """
 
 import time
+from datetime import datetime
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query, Response
@@ -61,8 +62,10 @@ def vessels_geojson(
     response: Response,
     bbox: str | None = Query(None, description="lon_min,lat_min,lon_max,lat_max"),
     max_age_min: int = Query(60, le=24 * 60),
+    at: str | None = Query(None, description="ISO datetime: posiciones a ese instante (archivo)"),
 ):
-    """Última posición conocida de cada buque (GeoJSON). Fuente: AIS terrestre en vivo."""
+    """Última posición conocida de cada buque (GeoJSON). Fuente: AIS terrestre.
+    Con `at`, devuelve el estado histórico dentro de la retención de la DB."""
     box = None
     if bbox:
         try:
@@ -70,8 +73,14 @@ def vessels_geojson(
             assert len(box) == 4
         except (ValueError, AssertionError):
             raise HTTPException(400, "bbox inválido: se espera lon_min,lat_min,lon_max,lat_max")
-    rows = latest_positions(bbox=box, max_age_min=max_age_min)
-    response.headers["Cache-Control"] = "public, max-age=30"
+    instante = None
+    if at:
+        try:
+            instante = datetime.fromisoformat(at.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(400, "at inválido: se espera ISO 8601")
+    rows = latest_positions(bbox=box, max_age_min=max_age_min, at=instante)
+    response.headers["Cache-Control"] = "public, max-age=300" if at else "public, max-age=30"
     return {
         "type": "FeatureCollection",
         "features": [
@@ -184,9 +193,15 @@ def _aircraft_feature(ac: dict, mil: bool) -> dict:
 
 
 @app.get("/api/tiles/gfw/{layer}/{z}/{x}/{y}.png")
-async def gfw_tile(layer: str, z: int, x: int, y: int, interval: str = "30days"):
+async def gfw_tile(
+    layer: str, z: int, x: int, y: int,
+    interval: str = "30days",
+    desde: str | None = None,
+    hasta: str | None = None,
+):
     """Proxy autenticado a los tiles 4Wings de GFW (el token vive solo acá).
-    Cache largo en CDN: los datos cambian cada pocas horas."""
+    `desde`/`hasta` (YYYY-MM-DD) permiten pedir el heatmap de un período
+    pasado — la barra de tiempo del frontend los usa. Cache largo en CDN."""
     if layer not in GFW_LAYERS:
         raise HTTPException(404, f"capa desconocida; disponibles: {list(GFW_LAYERS)}")
     if not settings.gfw_api_token:
@@ -196,6 +211,8 @@ async def gfw_tile(layer: str, z: int, x: int, y: int, interval: str = "30days")
         "interval": interval,
         "datasets[0]": GFW_LAYERS[layer],
     }
+    if desde and hasta:
+        params["date-range"] = f"{desde},{hasta}"
     async with httpx.AsyncClient(timeout=20) as client:
         r = await client.get(
             f"{GFW_TILE_BASE}/{z}/{x}/{y}",

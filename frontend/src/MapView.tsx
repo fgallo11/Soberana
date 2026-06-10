@@ -8,7 +8,19 @@ const FUENTE_TEXTO = ["Noto Sans Regular"];
 
 interface Props {
   visibles: Record<string, boolean>;
+  /** null = en vivo; "YYYY-MM-DD" = modo archivo (barra de tiempo) */
+  fecha: string | null;
   onDemo: () => void;
+}
+
+function restarDias(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+function hoyISO(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 /** bbox aéreo (debe coincidir con el backend): continente + Malvinas + corredor
@@ -74,11 +86,14 @@ function popupHTML(titulo: string, filas: Array<[string, unknown]>, nota?: strin
   return `<div class="pp"><h4>${titulo}</h4>${cuerpo}${nota ? `<p class="pp-nota">${nota}</p>` : ""}</div>`;
 }
 
-export default function MapView({ visibles, onDemo }: Props) {
+export default function MapView({ visibles, fecha, onDemo }: Props) {
   const contRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const visRef = useRef(visibles);
   visRef.current = visibles;
+  const fechaRef = useRef(fecha);
+  fechaRef.current = fecha;
+  const cargarAISRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!contRef.current || mapRef.current) return;
@@ -268,12 +283,20 @@ export default function MapView({ visibles, onDemo }: Props) {
       if (HAY_BACKEND) {
         const cargarAIS = async () => {
           try {
-            const data = await fetch(`${API_URL}/api/vessels`).then((r) => r.json());
+            const f = fechaRef.current;
+            // archivo: estado del día seleccionado (ventana 24 h hasta su fin)
+            const url = f
+              ? `${API_URL}/api/vessels?at=${f}T23:59:59Z&max_age_min=1440`
+              : `${API_URL}/api/vessels`;
+            const data = await fetch(url).then((r) => r.json());
             (map.getSource("ais") as GeoJSONSource | undefined)?.setData(data);
           } catch { /* backend caído: la capa queda vacía, sin romper el mapa */ }
         };
+        cargarAISRef.current = cargarAIS;
         cargarAIS();
-        timers.push(window.setInterval(cargarAIS, 60_000));
+        timers.push(window.setInterval(() => {
+          if (!fechaRef.current) cargarAIS(); // en archivo no hay nada nuevo que traer
+        }, 60_000));
       }
 
       // ---------- tráfico aéreo (con o sin backend) ----------
@@ -345,7 +368,8 @@ export default function MapView({ visibles, onDemo }: Props) {
         map.on("mouseleave", layerId, () => { map.getCanvas().style.cursor = ""; });
       }
 
-      aplicarVisibilidad(map, visRef.current);
+      aplicarVisibilidad(map, visRef.current, fechaRef.current);
+      aplicarFecha(map, fechaRef.current);
     });
 
     return () => {
@@ -357,8 +381,16 @@ export default function MapView({ visibles, onDemo }: Props) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map && map.isStyleLoaded()) aplicarVisibilidad(map, visibles);
-  }, [visibles]);
+    if (map && map.isStyleLoaded()) aplicarVisibilidad(map, visibles, fecha);
+  }, [visibles, fecha]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && map.isStyleLoaded()) {
+      aplicarFecha(map, fecha);
+      cargarAISRef.current();
+    }
+  }, [fecha]);
 
   return (
     <div className="mapa-marco">
@@ -368,11 +400,48 @@ export default function MapView({ visibles, onDemo }: Props) {
   );
 }
 
-function aplicarVisibilidad(map: MLMap, visibles: Record<string, boolean>) {
+function aplicarVisibilidad(map: MLMap, visibles: Record<string, boolean>, fecha: string | null) {
   for (const capa of CAPAS) {
-    const v = visibles[capa.id] ? "visible" : "none";
+    let activa = visibles[capa.id];
+    // en modo archivo: aeronaves solo en vivo (no retenemos su histórico);
+    // AIS histórico requiere backend
+    if (fecha && capa.id === "aereo") activa = false;
+    if (fecha && capa.id === "ais" && !HAY_BACKEND) activa = false;
+    const v = activa ? "visible" : "none";
     for (const layerId of capa.mapLayers) {
       if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", v);
+    }
+  }
+}
+
+/** Aplica la fecha seleccionada a las capas con dimensión temporal.
+ * - SAR: ventana de 7 días que termina en la fecha (la revisita de
+ *   Sentinel-1 deja días sin pasada; un solo día quedaría casi vacío).
+ * - VIIRS: la noche seleccionada.
+ * - Heatmap GFW: 30 días que terminan en la fecha (vía el proxy).
+ * En vivo, las ventanas terminan hoy. */
+function aplicarFecha(map: MLMap, fecha: string | null) {
+  const hasta = fecha ?? hoyISO();
+  const desdeSar = restarDias(hasta, 7);
+
+  if (map.getLayer("sar-circle")) {
+    map.setFilter("sar-circle", fecha
+      ? ["all", ["has", "fecha"], ["<=", ["get", "fecha"], hasta], [">", ["get", "fecha"], desdeSar]]
+      // en vivo somos tolerantes con features sin fecha (no las escondemos)
+      : ["any", ["!", ["has", "fecha"]], [">", ["get", "fecha"], desdeSar]]);
+  }
+  if (map.getLayer("viirs-circle")) {
+    map.setFilter("viirs-circle", fecha
+      ? ["==", ["get", "fecha"], fecha]
+      // en vivo: la noche más reciente disponible (≈ ayer)
+      : ["any", ["!", ["has", "fecha"]], [">", ["get", "fecha"], restarDias(hasta, 2)]]);
+  }
+  if (HAY_BACKEND && map.getSource("gfw-pesca")) {
+    const src = map.getSource("gfw-pesca") as maplibregl.RasterTileSource;
+    const base = `${API_URL}/api/tiles/gfw/pesca/{z}/{x}/{y}.png`;
+    const url = fecha ? `${base}?desde=${restarDias(fecha, 30)}&hasta=${fecha}` : base;
+    if (typeof (src as unknown as { setTiles?: unknown }).setTiles === "function") {
+      src.setTiles([url]);
     }
   }
 }

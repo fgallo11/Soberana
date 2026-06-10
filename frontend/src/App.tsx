@@ -5,6 +5,7 @@ import MapView from "./MapView";
 import EventLog from "./EventLog";
 import Metodologia from "./Metodologia";
 import PixelFlag from "./PixelFlag";
+import TimeBar from "./TimeBar";
 
 type Pestania = "mapa" | "eventos" | "metodologia";
 
@@ -13,6 +14,7 @@ export default function App() {
     location.hash.startsWith("#evento") ? "eventos" : "mapa",
   );
   const [demo, setDemo] = useState(false);
+  const [fecha, setFecha] = useState<string | null>(null); // null = en vivo
   const [visibles, setVisibles] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CAPAS.map((c) => [c.id, c.defaultOn && !(c.requiereBackend && !HAY_BACKEND)])),
   );
@@ -88,7 +90,10 @@ export default function App() {
               IGN · OpenStreetMap. Geometrías marcadas “aproximadas” son provisorias.
             </p>
           </aside>
-          <MapView visibles={visibles} onDemo={onDemo} />
+          <div className="mapa-zona">
+            <MapView visibles={visibles} fecha={fecha} onDemo={onDemo} />
+            <TimeBar fecha={fecha} onFecha={setFecha} />
+          </div>
         </div>
       )}
 
