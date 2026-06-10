@@ -15,15 +15,38 @@ export const ESTILO_ESPIA: StyleSpecification = {
       url: "https://tiles.openfreemap.org/planet",
       attribution: "© OpenStreetMap · tiles OpenFreeMap",
     },
+    // tierra propia (Natural Earth, commiteada al repo): el territorio se ve
+    // SIEMPRE, incluso si el servidor de tiles externo está caído
+    tierra: { type: "geojson", data: "/data/tierra.geojson" },
+    territorio: { type: "geojson", data: "/data/territorio_argentino.geojson" },
   },
   layers: [
-    { id: "fondo", type: "background", paint: { "background-color": "#0a0f0b" } },
+    // el fondo es el océano; la tierra se dibuja encima desde datos propios
+    { id: "fondo", type: "background", paint: { "background-color": "#04111a" } },
+    {
+      id: "tierra-fill",
+      type: "fill",
+      source: "tierra",
+      paint: { "fill-color": "#18271c" },
+    },
+    {
+      id: "tierra-costa",
+      type: "line",
+      source: "tierra",
+      paint: { "line-color": "#35634a", "line-width": 0.8, "line-opacity": 0.9 },
+    },
+    {
+      id: "territorio-arg",
+      type: "fill",
+      source: "territorio",
+      paint: { "fill-color": "#245130", "fill-opacity": 0.55 },
+    },
     {
       id: "agua",
       type: "fill",
       source: "omt",
       "source-layer": "water",
-      paint: { "fill-color": "#04131c" },
+      paint: { "fill-color": "#04111a" },
     },
     {
       id: "rios",

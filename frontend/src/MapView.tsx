@@ -1,6 +1,6 @@
 import maplibregl, { GeoJSONSource, Map as MLMap, Popup } from "maplibre-gl";
 import { useEffect, useRef } from "react";
-import { API_URL, HAY_BACKEND, LIMITES, VISTA_INICIAL, ZOOM_MAX, ZOOM_MIN } from "./config";
+import { API_URL, HAY_BACKEND, LIMITES, VISTA_INICIAL_BOUNDS, ZOOM_MAX, ZOOM_MIN } from "./config";
 import { CAPAS } from "./layers";
 import { ESTILO_ESPIA } from "./map_style";
 
@@ -84,8 +84,8 @@ export default function MapView({ visibles, onDemo }: Props) {
     const map = new maplibregl.Map({
       container: contRef.current,
       style: ESTILO_ESPIA,
-      center: VISTA_INICIAL.center,
-      zoom: VISTA_INICIAL.zoom,
+      bounds: VISTA_INICIAL_BOUNDS,
+      fitBoundsOptions: { padding: 24 },
       maxBounds: LIMITES,   // navegación limitada: Argentina (con Antártida e islas) y una porción más
       minZoom: ZOOM_MIN,
       maxZoom: ZOOM_MAX,

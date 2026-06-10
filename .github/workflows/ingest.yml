@@ -36,6 +36,12 @@ jobs:
           SOBERANA_DATA_DIR: ../frontend/public/data
         run: python -m soberana.ingest.static_layers
 
+      - name: Tierra y territorio (Natural Earth, sin token)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+        run: python -m soberana.ingest.tierra || echo "::warning::tierra falló (Natural Earth inaccesible); se mantienen los archivos commiteados"
+
       - name: Alturas del Paraná (Prefectura, sin token)
         working-directory: server
         env:

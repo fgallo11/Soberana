@@ -10,9 +10,13 @@ export const API_URL: string = (import.meta.env.VITE_API_URL as string | undefin
 
 export const HAY_BACKEND = API_URL !== "";
 
-/** Vista inicial: todo el territorio — continente, Mar Argentino, islas del
- * Atlántico Sur y Antártida Argentina. */
-export const VISTA_INICIAL = { center: [-55.0, -52.0] as [number, number], zoom: 2.9 };
+/** Vista inicial: todo el territorio a la vista — continente completo, Mar
+ * Argentino, islas del Atlántico Sur y el norte del Sector Antártico —
+ * ajustado al tamaño de pantalla (bounds, no centro/zoom fijos). */
+export const VISTA_INICIAL_BOUNDS: [[number, number], [number, number]] = [
+  [-77.0, -71.0],
+  [-32.0, -22.0],
+];
 
 /** Límites de navegación: Argentina (con Antártida e islas) y una porción más.
  * El usuario puede hacer zoom y paneo libremente dentro de esta caja. */
