@@ -13,9 +13,13 @@ Arquitectura: ver [PLAN.md](../PLAN.md) §2. Orden recomendado: cada paso deja a
 
 1. Sacá los tokens (todos gratis):
    - **GFW**: registrate en https://globalfishingwatch.org/our-apis/ → API token.
-   - **EOG (VIIRS)**: registrate en https://eogdata.mines.edu/ → usuario/clave.
+   - **EOG (VIIRS)** — son dos pasos desde mayo 2025:
+     1. Registrate en https://eogdata.mines.edu/products/register/ → usuario/clave.
+     2. Mandá un mail a **eog@mines.edu** pidiendo un *OpenID client ID y secret
+        para descargas programáticas* (gratuito). Sin esto, la descarga
+        automatizada puede fallar (el flujo viejo está discontinuado).
 2. En GitHub: Settings → Secrets and variables → Actions → New repository secret:
-   `GFW_API_TOKEN`, `EOG_USERNAME`, `EOG_PASSWORD`.
+   `GFW_API_TOKEN`, `EOG_USERNAME`, `EOG_PASSWORD`, `EOG_CLIENT_ID`, `EOG_CLIENT_SECRET`.
 3. Corré a mano el workflow **“Ingesta de datos”** (Actions → Run workflow) para validar.
 4. A partir de ahí corre cada 6 hs, commitea los datos y Vercel redeploya solo.
    El banner de “datos de demostración” desaparece en el primer ciclo exitoso.

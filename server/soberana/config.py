@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     aisstream_api_key: str = ""    # https://aisstream.io/
     eog_username: str = ""         # VIIRS VBD: https://eogdata.mines.edu/
     eog_password: str = ""
+    # Desde mayo 2025 EOG usa OpenID con client propio: hay que pedir
+    # client_id y client_secret por mail a eog@mines.edu (gratuito).
+    # Sin estos, se intenta el flujo legado (puede estar dado de baja).
+    eog_client_id: str = ""
+    eog_client_secret: str = ""
 
     # --- Área de interés ---
     # bbox de vigilancia satelital (lon_min, lat_min, lon_max, lat_max).

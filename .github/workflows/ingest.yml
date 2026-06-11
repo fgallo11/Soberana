@@ -67,6 +67,8 @@ jobs:
           SOBERANA_DATA_DIR: ../frontend/public/data
           SOBERANA_EOG_USERNAME: ${{ secrets.EOG_USERNAME }}
           SOBERANA_EOG_PASSWORD: ${{ secrets.EOG_PASSWORD }}
+          SOBERANA_EOG_CLIENT_ID: ${{ secrets.EOG_CLIENT_ID }}
+          SOBERANA_EOG_CLIENT_SECRET: ${{ secrets.EOG_CLIENT_SECRET }}
         run: |
           if [ -z "$SOBERANA_EOG_USERNAME" ]; then
             echo "::notice::EOG no configurado: se mantienen los datos existentes"
