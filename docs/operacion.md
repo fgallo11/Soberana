@@ -26,6 +26,22 @@ journalctl -u soberana-ais -f
 journalctl -u soberana-api -f
 ```
 
+## Archivo frío (correr en la VM, diario)
+
+La DB retiene ~14 días; `export_frio` salva cada día completo a CSV
+comprimido ANTES de que la poda lo alcance — es lo que permite reconstruir
+recorridos del pasado más allá de la retención:
+
+```bash
+# cron diario en la VM (ej. 03:30 UTC)
+30 3 * * * cd /home/ubuntu/Soberana/server && .venv/bin/python -m soberana.ingest.export_frio /home/ubuntu/archivo_frio
+# subida a R2 (bucket gratuito) con rclone, después del export
+40 3 * * * rclone copy /home/ubuntu/archivo_frio r2:soberana-archivo/positions/
+```
+
+Idempotente: los días ya exportados se saltean. Verificación: `ls archivo_frio/`
+debe tener un `positions_YYYY-MM-DD.csv.gz` por cada día con datos.
+
 ## Decisiones de retención
 
 - Posiciones AIS: 14 días “hot” en Postgres (`SOBERANA_POSICIONES_RETENCION_DIAS`),

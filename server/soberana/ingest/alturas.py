@@ -23,24 +23,6 @@ from ..db import utcnow
 log = logging.getLogger("soberana.alturas")
 URL = "https://contenidosweb.prefecturanaval.gob.ar/alturas/index.php"
 
-# Puertos de la Vía Navegable Troncal que mostramos (con coordenadas para el mapa)
-PUERTOS_HIDROVIA = {
-    "CORRIENTES": (-27.469, -58.834),
-    "BARRANQUERAS": (-27.486, -58.934),
-    "GOYA": (-29.140, -59.263),
-    "RECONQUISTA": (-29.150, -59.650),
-    "LA PAZ": (-30.745, -59.645),
-    "SANTA FE": (-31.633, -60.710),
-    "PARANA": (-31.732, -60.529),
-    "DIAMANTE": (-32.066, -60.639),
-    "ROSARIO": (-32.947, -60.630),
-    "SAN NICOLAS": (-33.333, -60.210),
-    "RAMALLO": (-33.486, -60.005),
-    "SAN PEDRO": (-33.679, -59.665),
-    "ZARATE": (-34.098, -59.028),
-    "CAMPANA": (-34.158, -58.959),
-}
-
 
 class _TablaAlturas(HTMLParser):
     """Parser mínimo sin dependencias: extrae filas <tr> de celdas de texto."""
@@ -76,12 +58,16 @@ def ingerir() -> Path:
     parser = _TablaAlturas()
     parser.feed(resp.text)
 
+    # fuente única de puertos (puertos.geojson generado por puertos.py)
+    from .puertos import _normalizar, indice_normalizado
+    puertos = indice_normalizado()
+
     registros = []
     for row in parser.rows:
         if len(row) < 2:
             continue
-        nombre = row[0].upper().strip()
-        for puerto, (lat, lon) in PUERTOS_HIDROVIA.items():
+        nombre = _normalizar(row[0])
+        for puerto, (lat, lon) in puertos.items():
             if puerto in nombre:
                 m = re.search(r"(-?\d+[.,]\d+)", " ".join(row[1:]))
                 if not m:

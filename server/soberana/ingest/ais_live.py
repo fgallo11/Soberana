@@ -25,23 +25,18 @@ from ..db import events, get_engine, init_db, positions, prune_positions, utcnow
 
 log = logging.getLogger("soberana.ais")
 
-# Puertos para silenciar falsas alarmas de gap (un buque amarrado apaga el AIS legítimamente)
-PUERTOS = [
-    ("Rosario", -32.94, -60.63),
-    ("San Lorenzo/San Martín", -32.72, -60.73),
-    ("Timbúes", -32.67, -60.71),
-    ("Santa Fe", -31.65, -60.70),
-    ("San Nicolás", -33.33, -60.21),
-    ("Zárate", -34.09, -59.03),
-    ("Campana", -34.16, -58.95),
-    ("Buenos Aires", -34.58, -58.37),
-    ("Dock Sud", -34.65, -58.35),
-    ("La Plata", -34.85, -57.88),
-    ("Bahía Blanca", -38.79, -62.27),
-    ("Quequén", -38.58, -58.70),
-    ("Mar del Plata", -38.03, -57.53),
-    ("Barranqueras", -27.48, -58.93),
-]
+# Puertos para silenciar falsas alarmas de gap (un buque amarrado apaga el
+# AIS legítimamente). Fuente única: puertos.geojson, con fallback embebido.
+_puertos_cache: list[tuple[str, float, float, str]] | None = None
+
+
+def _puertos() -> list[tuple[str, float, float, str]]:
+    global _puertos_cache
+    if _puertos_cache is None:
+        from .puertos import cargar_puertos
+        _puertos_cache = cargar_puertos()
+        log.info("puertos cargados para el detector de gaps: %d", len(_puertos_cache))
+    return _puertos_cache
 
 # Estado en memoria del detector: mmsi -> última posición/timestamp
 _last_seen: dict[str, dict] = {}
@@ -57,7 +52,7 @@ def _km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 def _cerca_de_puerto(lat: float, lon: float) -> bool:
-    return any(_km(lat, lon, plat, plon) <= settings.gap_radio_puerto_km for _, plat, plon in PUERTOS)
+    return any(_km(lat, lon, plat, plon) <= settings.gap_radio_puerto_km for _, plat, plon, _ in _puertos())
 
 
 def _zona(lat: float, lon: float) -> str:

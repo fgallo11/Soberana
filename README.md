@@ -6,7 +6,9 @@ Hidrovía Paraná–Paraguay · Zona Económica Exclusiva · milla 201 · Malvin
 Gratuito a perpetuidad. Sin publicidad. Sin cuentas. Datos abiertos y código abierto.
 El objetivo es uno solo: que cualquier persona pueda ver qué pasa en los mares y ríos argentinos.
 
-> 📋 El plan completo del proyecto (alcance, fuentes, trade-offs, roadmap) está en [PLAN.md](PLAN.md).
+> 📋 El plan operativo (alcance, fuentes, trade-offs, roadmap) está en [PLAN.md](PLAN.md).
+> 🧭 La visión completa —soberanía por dominios: marítimo, Hidrovía, territorial, energético, digital, aéreo— en [docs/vision.md](docs/vision.md).
+> 🤝 ¿Querés sumarte? La pestaña **Colaborá** del sitio explica cómo; los issues del repo son el punto de entrada.
 
 ## Qué muestra
 

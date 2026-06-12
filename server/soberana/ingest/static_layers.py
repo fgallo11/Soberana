@@ -19,7 +19,7 @@ import json
 import math
 from pathlib import Path
 
-from shapely.geometry import LineString, Point, Polygon, mapping
+from shapely.geometry import Point, Polygon, mapping
 from shapely.ops import unary_union
 
 from ..config import settings
@@ -80,19 +80,9 @@ BASES_MILITARES = [
     ("VI Brigada Aérea (Tandil)", -59.250, -37.237, "Fuerza Aérea Argentina", "Argentina", ""),
 ]
 
-PUERTOS = [
-    ("Corrientes", -58.834, -27.469, "fluvial"), ("Barranqueras", -58.934, -27.486, "fluvial"),
-    ("Goya", -59.264, -29.140, "fluvial"), ("La Paz", -59.645, -30.745, "fluvial"),
-    ("Santa Fe", -60.710, -31.633, "fluvial"), ("Diamante", -60.639, -32.066, "fluvial"),
-    ("Rosario", -60.630, -32.947, "fluvial"), ("San Nicolás", -60.210, -33.333, "fluvial"),
-    ("San Pedro", -59.665, -33.679, "fluvial"), ("Zárate", -59.028, -34.098, "fluvial"),
-    ("Campana", -58.959, -34.158, "fluvial"), ("Buenos Aires", -58.370, -34.580, "fluvial"),
-    ("La Plata", -57.880, -34.850, "fluvial"),
-    ("Bahía Blanca", -62.270, -38.790, "marítimo"), ("Quequén", -58.700, -38.580, "marítimo"),
-    ("Mar del Plata", -57.530, -38.030, "marítimo"), ("Puerto Madryn", -65.030, -42.760, "marítimo"),
-    ("Comodoro Rivadavia", -67.480, -45.860, "marítimo"), ("Puerto Deseado", -65.900, -47.750, "marítimo"),
-    ("Punta Quilla", -68.420, -50.120, "marítimo"), ("Ushuaia", -68.300, -54.810, "marítimo"),
-]
+# NOTA: los puertos y la traza de la Hidrovía se mudaron a sus propios jobs
+# con fuentes reales (puertos.py: dataset oficial de la Dirección Nacional de
+# Puertos; hidrovia.py: OSM vía Overpass / Natural Earth).
 
 # Sector Antártico Argentino: entre los meridianos 25°O y 74°O al sur del
 # paralelo 60°S (recortado en 85°S por el límite de la proyección web mercator)
@@ -105,17 +95,6 @@ ISLAS_ATLANTICO_SUR = [
     ("Islas Orcadas del Sur", -45.40, -60.60),
     ("Islas Shetland del Sur", -58.50, -62.10),
 ]
-
-# Traza aproximada de la Vía Navegable Troncal (Corrientes → Recalada)
-HIDROVIA = [
-    (-58.83, -27.47), (-58.80, -27.95), (-59.05, -28.50), (-59.26, -29.14),
-    (-59.55, -29.70), (-59.63, -30.74), (-59.98, -31.23), (-60.70, -31.65),
-    (-60.64, -32.07), (-60.70, -32.50), (-60.63, -32.95), (-60.21, -33.33),
-    (-59.66, -33.68), (-59.03, -34.10), (-58.96, -34.16), (-58.50, -34.30),
-    (-58.20, -34.48), (-57.50, -34.85), (-56.70, -35.05), (-56.42, -35.10),
-    (-55.90, -35.35),
-]
-
 
 def _fc(features: list[dict], **metadata) -> dict:
     return {"type": "FeatureCollection", "metadata": metadata, "features": features}
@@ -204,19 +183,6 @@ def generar(out_dir: str | None = None) -> list[Path]:
                  extranjera=(pa != "Argentina"))
         for n, lon, lat, f, pa, nota in BASES_MILITARES
     ], descripcion="Instalaciones militares de conocimiento público (coordenadas aproximadas)"), ensure_ascii=False))
-    escritos.append(p)
-
-    # --- Hidrovía y puertos ---
-    p = out / "hidrovia.geojson"
-    p.write_text(json.dumps(_fc([
-        _feature(LineString(HIDROVIA), nombre="Vía Navegable Troncal (traza aproximada)", aproximado=True)
-    ])))
-    escritos.append(p)
-
-    p = out / "puertos.geojson"
-    p.write_text(json.dumps(_fc([
-        _feature(Point(lon, lat), nombre=n, tipo=t) for n, lon, lat, t in PUERTOS
-    ]), ensure_ascii=False))
     escritos.append(p)
 
     return escritos

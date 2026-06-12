@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .. import __version__
 from ..config import settings
-from ..db import day_tracks, init_db, latest_positions, list_events, utcnow, vessel_track
+from ..db import day_tracks, init_db, latest_positions, list_events, port_calls, utcnow, vessel_track
 
 app = FastAPI(title="Soberana API", version=__version__)
 
@@ -116,6 +116,14 @@ def replay(response: Response, fecha: str, step_min: int = Query(10, ge=1, le=60
         raise HTTPException(400, "fecha inválida: se espera YYYY-MM-DD")
     response.headers["Cache-Control"] = "public, max-age=600"
     return {"fecha": fecha, "demo": False, "step_min": step_min, "buques": day_tracks(dia, step_min=step_min)}
+
+
+@app.get("/api/vessels/{mmsi}/escalas")
+def escalas(response: Response, mmsi: str, dias: int = Query(14, le=60)):
+    """Escalas en puerto del buque (reconstrucción inferida del historial AIS:
+    permanencia ≥2 h dentro del radio de un puerto). 'salida: null' = sigue ahí."""
+    response.headers["Cache-Control"] = "public, max-age=600"
+    return {"mmsi": mmsi, "dias": dias, "reconstruido": True, "escalas": port_calls(mmsi, dias=dias)}
 
 
 @app.get("/api/vessels/{mmsi}/track")

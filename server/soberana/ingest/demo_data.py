@@ -16,7 +16,7 @@ from pathlib import Path
 
 from ..config import settings
 from ..db import utcnow
-from .static_layers import HIDROVIA
+from .hidrovia import cargar_troncal
 
 
 def _acumulado(path: list[tuple[float, float]]) -> tuple[list[float], float]:
@@ -151,10 +151,12 @@ def generar(out_dir: str | None = None) -> list[Path]:
     }, ensure_ascii=False))
     escritos.append(p)
 
-    # Película demo: buques recorriendo la Hidrovía y la costa a velocidad
-    # realista (~15-22 km/h los fluviales), muestreados cada 10 minutos, para
-    # los últimos 3 días. El frontend interpola entre puntos → movimiento fluido.
-    rutas = [(list(HIDROVIA), _acumulado(HIDROVIA)), (RUTA_COSTERA, _acumulado(RUTA_COSTERA))]
+    # Película demo: buques recorriendo la Hidrovía REAL (traza generada por
+    # hidrovia.py, con meandros) y la costa a velocidad realista (~15-22 km/h
+    # los fluviales), muestreados cada 10 minutos, para los últimos 3 días.
+    # El frontend interpola entre puntos → movimiento fluido.
+    troncal = cargar_troncal(str(out))
+    rutas = [(troncal, _acumulado(troncal)), (RUTA_COSTERA, _acumulado(RUTA_COSTERA))]
     flota = []
     for i in range(14):
         ruta_idx = 0 if i < 10 else 1

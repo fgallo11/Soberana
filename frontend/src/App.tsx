@@ -2,12 +2,13 @@ import { useCallback, useMemo, useState } from "react";
 import { HAY_BACKEND } from "./config";
 import { CAPAS } from "./layers";
 import MapView from "./MapView";
+import Colaborar from "./Colaborar";
 import EventLog from "./EventLog";
 import Metodologia from "./Metodologia";
 import PixelFlag from "./PixelFlag";
 import TimeBar, { type Tiempo } from "./TimeBar";
 
-type Pestania = "mapa" | "eventos" | "metodologia";
+type Pestania = "mapa" | "eventos" | "metodologia" | "colaborar";
 
 export default function App() {
   const [pestania, setPestania] = useState<Pestania>(
@@ -46,6 +47,12 @@ export default function App() {
           </button>
           <button className={pestania === "metodologia" ? "activa" : ""} onClick={() => setPestania("metodologia")}>
             [ QUÉ ESTÁS VIENDO ]
+          </button>
+          <button
+            className={`tab-colaborar ${pestania === "colaborar" ? "activa" : ""}`}
+            onClick={() => setPestania("colaborar")}
+          >
+            [ COLABORÁ ]
           </button>
         </nav>
       </header>
@@ -99,6 +106,7 @@ export default function App() {
 
       {pestania === "eventos" && <EventLog />}
       {pestania === "metodologia" && <Metodologia />}
+      {pestania === "colaborar" && <Colaborar />}
     </div>
   );
 }

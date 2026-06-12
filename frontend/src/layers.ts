@@ -114,9 +114,10 @@ export const CAPAS: CapaDef[] = [
     id: "hidrovia",
     grupo: "Hidrovía",
     titulo: "Vía Navegable Troncal y puertos",
-    descripcion: "Traza aproximada de la Hidrovía Paraná–Paraguay y puertos principales.",
+    descripcion:
+      "Curso real de la Hidrovía Paraná–Paraguay (OSM/Natural Earth) con la traza navegable Corrientes → Recalada resaltada, y puertos (Dirección Nacional de Puertos).",
     badge: "estático",
-    mapLayers: ["hidrovia-line", "puertos-circle", "puertos-label"],
+    mapLayers: ["hidrovia-curso", "hidrovia-troncal", "puertos-circle", "puertos-label"],
     defaultOn: true,
   },
   {

@@ -189,6 +189,72 @@ def prune_positions() -> int:
         return res.rowcount or 0
 
 
+def port_calls(mmsi: str, dias: int = 14, radio_km: float = 8.0, min_horas: float = 2.0) -> list[dict]:
+    """Escalas en puerto inferidas del historial AIS: períodos en los que el
+    buque permaneció dentro del radio de un puerto al menos `min_horas`.
+
+    Responde "de dónde viene, en qué puertos paró". Es inferencia sobre
+    posiciones autoreportadas: la API lo rotula como reconstrucción.
+    """
+    import math
+
+    from .config import settings as _s  # noqa: F401  (radio configurable a futuro)
+    from .ingest.puertos import cargar_puertos
+
+    puertos = cargar_puertos()
+
+    def _km(lat1, lon1, lat2, lon2):
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        return 2 * 6371.0 * math.asin(math.sqrt(a))
+
+    def _puerto_de(lat, lon):
+        for nombre, plat, plon, _tipo in puertos:
+            if _km(lat, lon, plat, plon) <= radio_km:
+                return nombre
+        return None
+
+    eng = get_engine()
+    cutoff = utcnow() - timedelta(days=dias)
+    with eng.connect() as conn:
+        rows = conn.execute(
+            select(positions.c.ts, positions.c.lat, positions.c.lon)
+            .where(positions.c.mmsi == mmsi, positions.c.ts >= cutoff)
+            .order_by(positions.c.ts)
+        ).all()
+
+    escalas: list[dict] = []
+    abierta: dict | None = None
+    for ts, lat, lon in rows:
+        puerto = _puerto_de(lat, lon)
+        if puerto:
+            if abierta and abierta["puerto"] == puerto:
+                abierta["salida"] = ts
+            else:
+                if abierta:
+                    escalas.append(abierta)
+                abierta = {"puerto": puerto, "llegada": ts, "salida": ts}
+        elif abierta:
+            escalas.append(abierta)
+            abierta = None
+    if abierta:
+        abierta["en_curso"] = True
+        escalas.append(abierta)
+
+    out = []
+    for e in escalas:
+        horas = (e["salida"] - e["llegada"]).total_seconds() / 3600
+        if horas >= min_horas:
+            out.append({
+                "puerto": e["puerto"],
+                "llegada": e["llegada"].isoformat(),
+                "salida": None if e.get("en_curso") else e["salida"].isoformat(),
+                "horas": round(horas, 1),
+            })
+    return out
+
+
 def day_tracks(fecha: datetime, step_min: int = 10) -> dict:
     """Recorridos de todos los buques durante un día calendario (UTC),
     submuestreados a un punto por buque cada `step_min` minutos.

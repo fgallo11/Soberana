@@ -76,6 +76,14 @@ body {
   color: #04140a; background: var(--fosforo); border-color: var(--fosforo);
   text-shadow: none;
 }
+.pestanias .tab-colaborar { color: var(--celeste); border-color: #2b4a66; }
+.pestanias .tab-colaborar.activa { color: #04140a; background: var(--celeste); border-color: var(--celeste); }
+
+.colaborar code {
+  background: #000; border: 1px solid var(--borde-suave); padding: 0 0.3rem;
+  font-family: var(--fuente-term); font-size: 0.95em; color: var(--celeste);
+}
+.colaborar a { color: var(--fosforo); }
 
 /* ---------- banner demo ---------- */
 .banner-demo {

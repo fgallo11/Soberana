@@ -36,6 +36,18 @@ jobs:
           SOBERANA_DATA_DIR: ../frontend/public/data
         run: python -m soberana.ingest.static_layers
 
+      - name: Hidrovía — curso real del río (OSM/Natural Earth, sin token)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+        run: python -m soberana.ingest.hidrovia || echo "::warning::hidrovia falló; se mantiene el archivo commiteado"
+
+      - name: Puertos (Dirección Nacional de Puertos, sin token)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+        run: python -m soberana.ingest.puertos || echo "::warning::puertos falló; se mantiene el archivo commiteado"
+
       - name: Tierra y territorio (Natural Earth, sin token)
         working-directory: server
         env:

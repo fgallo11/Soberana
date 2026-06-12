@@ -234,8 +234,14 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
 
       map.addSource("hidrovia", { type: "geojson", data: "/data/hidrovia.geojson" });
       map.addLayer({
-        id: "hidrovia-line", type: "line", source: "hidrovia",
-        paint: { "line-color": "#00b894", "line-width": 2 },
+        id: "hidrovia-curso", type: "line", source: "hidrovia",
+        filter: ["==", ["get", "tipo"], "curso"],
+        paint: { "line-color": "#0d5c4d", "line-width": 1.2, "line-opacity": 0.8 },
+      });
+      map.addLayer({
+        id: "hidrovia-troncal", type: "line", source: "hidrovia",
+        filter: ["==", ["get", "tipo"], "troncal"],
+        paint: { "line-color": "#00b894", "line-width": 2.2 },
       });
 
       map.addSource("puertos", { type: "geojson", data: "/data/puertos.geojson" });
