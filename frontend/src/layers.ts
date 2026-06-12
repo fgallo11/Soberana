@@ -63,9 +63,9 @@ export const CAPAS: CapaDef[] = [
   {
     id: "sar",
     grupo: "Mar y milla 201",
-    titulo: "Detecciones por radar satelital (SAR)",
+    titulo: "📷 Radar satelital (SAR) — foto",
     descripcion:
-      "Buques detectados por Sentinel-1, transmitan o no AIS. Rojo: detección no correlacionada con AIS (buque 'dark'). Fuente: Global Fishing Watch.",
+      "FOTO por pasada del satélite, no película: buques detectados por Sentinel-1 transmitan o no AIS. Rojo: sin correlación con AIS (buque 'dark'). Elegí el día en la barra de tiempo. Fuente: Global Fishing Watch.",
     badge: "~5 días",
     mapLayers: ["sar-circle"],
     defaultOn: true,
@@ -73,9 +73,9 @@ export const CAPAS: CapaDef[] = [
   {
     id: "viirs",
     grupo: "Mar y milla 201",
-    titulo: "Luces nocturnas de barcos (VIIRS)",
+    titulo: "📷 Luces nocturnas (VIIRS) — foto",
     descripcion:
-      "Luces de la flota pesquera detectadas de noche por satélite: la flota potera se ve aunque apague el AIS. Fuente: EOG/NOAA.",
+      "UNA FOTO POR NOCHE, no película: las luces de la flota potera vistas por satélite, aunque apague el AIS. Elegí la noche en la barra de tiempo. Fuente: EOG/NOAA.",
     badge: "~24 h",
     mapLayers: ["viirs-circle"],
     defaultOn: true,
@@ -93,13 +93,12 @@ export const CAPAS: CapaDef[] = [
   {
     id: "ais",
     grupo: "Hidrovía",
-    titulo: "Buques en vivo (AIS costero)",
+    titulo: "🎬 Buques (AIS costero)",
     descripcion:
-      "Posiciones AIS en la Hidrovía y el litoral. El AIS terrestre NO llega a la milla 201: lo que pasa allá se ve en las capas satelitales.",
+      "En vivo: posiciones AIS de la Hidrovía y el litoral (requiere backend). En archivo: película del día — recorridos reconstruidos e interpolados. El AIS terrestre NO llega a la milla 201: lo que pasa allá se ve en las fotos satelitales.",
     badge: "en vivo",
     mapLayers: ["ais-circle", "ais-label"],
     defaultOn: true,
-    requiereBackend: true,
   },
   {
     id: "hidrovia",

@@ -213,7 +213,13 @@ body {
   box-shadow: 4px 4px 0 #000; padding: 0.5rem 0.8rem;
   display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.9rem; align-items: center;
 }
-.tb-controles { display: flex; gap: 0.35rem; }
+.tb-controles { display: flex; gap: 0.35rem; align-items: center; }
+.tb-fecha-input {
+  background: #000; color: var(--texto); border: 2px solid var(--borde-suave);
+  font-family: var(--fuente-term); font-size: 0.95rem; padding: 0.22rem 0.3rem;
+  color-scheme: dark;
+}
+.tb-fecha-input:hover { border-color: var(--borde); }
 .tb-controles button {
   background: #000; border: 2px solid var(--borde-suave); color: var(--texto-suave);
   font-family: var(--fuente-pixel); font-size: 0.55rem; padding: 0.32rem 0.5rem; cursor: pointer;

@@ -6,11 +6,48 @@ import { ESTILO_ESPIA } from "./map_style";
 
 const FUENTE_TEXTO = ["Noto Sans Regular"];
 
+import type { Tiempo } from "./TimeBar";
+
 interface Props {
   visibles: Record<string, boolean>;
-  /** null = en vivo; "YYYY-MM-DD" = modo archivo (barra de tiempo) */
-  fecha: string | null;
+  /** null = en vivo; {fecha, minuto} = modo archivo (barra de tiempo) */
+  tiempo: Tiempo | null;
   onDemo: () => void;
+}
+
+/** Recorridos de un día: mmsi -> {name, flag, pts: [[minuto, lon, lat], ...]} */
+type ReplayDia = Record<string, { name?: string; flag?: string; pts: [number, number, number][] }>;
+
+/** Posiciones interpoladas al minuto pedido → la "película" fluida.
+ * Entre muestras (cada ~10 min) se interpola linealmente; si el hueco
+ * supera 45 min (sombra de cobertura) el buque se oculta hasta reaparecer. */
+function fotograma(buques: ReplayDia, fecha: string, minuto: number) {
+  const features: any[] = [];
+  for (const [mmsi, b] of Object.entries(buques)) {
+    const pts = b.pts;
+    if (!pts.length || minuto < pts[0][0] - 30 || minuto > pts[pts.length - 1][0] + 30) continue;
+    let lon: number, lat: number;
+    let i = pts.findIndex((p) => p[0] > minuto);
+    if (i === -1) { [, lon, lat] = pts[pts.length - 1]; }
+    else if (i === 0) { [, lon, lat] = pts[0]; }
+    else {
+      const [m0, lo0, la0] = pts[i - 1];
+      const [m1, lo1, la1] = pts[i];
+      if (m1 - m0 > 45) continue; // hueco grande: no inventar trayectoria
+      const f = (minuto - m0) / (m1 - m0 || 1e-9);
+      lon = lo0 + (lo1 - lo0) * f;
+      lat = la0 + (la1 - la0) * f;
+    }
+    features.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [lon, lat] },
+      properties: {
+        mmsi, name: b.name, flag: b.flag,
+        ts: `${fecha} ${String(Math.floor(minuto / 60)).padStart(2, "0")}:${String(Math.floor(minuto % 60)).padStart(2, "0")} UTC (reconstruido)`,
+      },
+    });
+  }
+  return { type: "FeatureCollection" as const, features };
 }
 
 function restarDias(iso: string, n: number): string {
@@ -86,14 +123,21 @@ function popupHTML(titulo: string, filas: Array<[string, unknown]>, nota?: strin
   return `<div class="pp"><h4>${titulo}</h4>${cuerpo}${nota ? `<p class="pp-nota">${nota}</p>` : ""}</div>`;
 }
 
-export default function MapView({ visibles, fecha, onDemo }: Props) {
+export default function MapView({ visibles, tiempo, onDemo }: Props) {
   const contRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const visRef = useRef(visibles);
   visRef.current = visibles;
-  const fechaRef = useRef(fecha);
-  fechaRef.current = fecha;
+  const tiempoRef = useRef(tiempo);
+  tiempoRef.current = tiempo;
   const cargarAISRef = useRef<() => void>(() => {});
+  // película del día cargada: { fecha, buques }
+  const replayRef = useRef<{ fecha: string; buques: ReplayDia } | null>(null);
+  const replayDemoRef = useRef<Record<string, ReplayDia> | null>(null);
+  // true cuando el handler de 'load' terminó de armar fuentes y capas.
+  // (no usar map.isStyleLoaded(): con un tile server caído puede dar false
+  // en cualquier momento y los efectos se perderían sin reintento)
+  const listoRef = useRef(false);
 
   useEffect(() => {
     if (!contRef.current || mapRef.current) return;
@@ -108,6 +152,7 @@ export default function MapView({ visibles, fecha, onDemo }: Props) {
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    (window as unknown as { __soberanaMap?: MLMap }).__soberanaMap = map; // handle para tests/debug
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ unit: "metric" }));
 
@@ -282,21 +327,15 @@ export default function MapView({ visibles, fecha, onDemo }: Props) {
       });
       if (HAY_BACKEND) {
         const cargarAIS = async () => {
+          if (tiempoRef.current) return; // en archivo manda la película, no el polling
           try {
-            const f = fechaRef.current;
-            // archivo: estado del día seleccionado (ventana 24 h hasta su fin)
-            const url = f
-              ? `${API_URL}/api/vessels?at=${f}T23:59:59Z&max_age_min=1440`
-              : `${API_URL}/api/vessels`;
-            const data = await fetch(url).then((r) => r.json());
+            const data = await fetch(`${API_URL}/api/vessels`).then((r) => r.json());
             (map.getSource("ais") as GeoJSONSource | undefined)?.setData(data);
           } catch { /* backend caído: la capa queda vacía, sin romper el mapa */ }
         };
         cargarAISRef.current = cargarAIS;
         cargarAIS();
-        timers.push(window.setInterval(() => {
-          if (!fechaRef.current) cargarAIS(); // en archivo no hay nada nuevo que traer
-        }, 60_000));
+        timers.push(window.setInterval(cargarAIS, 60_000));
       }
 
       // ---------- tráfico aéreo (con o sin backend) ----------
@@ -368,8 +407,9 @@ export default function MapView({ visibles, fecha, onDemo }: Props) {
         map.on("mouseleave", layerId, () => { map.getCanvas().style.cursor = ""; });
       }
 
-      aplicarVisibilidad(map, visRef.current, fechaRef.current);
-      aplicarFecha(map, fechaRef.current);
+      listoRef.current = true;
+      aplicarVisibilidad(map, visRef.current, tiempoRef.current?.fecha ?? null);
+      aplicarFecha(map, tiempoRef.current?.fecha ?? null);
     });
 
     return () => {
@@ -379,18 +419,59 @@ export default function MapView({ visibles, fecha, onDemo }: Props) {
     };
   }, []);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map && map.isStyleLoaded()) aplicarVisibilidad(map, visibles, fecha);
-  }, [visibles, fecha]);
+  const fecha = tiempo?.fecha ?? null;
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map && map.isStyleLoaded()) {
-      aplicarFecha(map, fecha);
-      cargarAISRef.current();
+    if (map && listoRef.current) aplicarVisibilidad(map, visibles, fecha);
+  }, [visibles, fecha]);
+
+  // cambio de día: filtros satelitales ("fotos") + carga de la película del día
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !listoRef.current) return;
+    aplicarFecha(map, fecha);
+    if (!fecha) {
+      replayRef.current = null;
+      cargarAISRef.current(); // volver a la señal en vivo
+      return;
     }
-  }, [fecha]);
+    let cancelado = false;
+    (async () => {
+      let buques: ReplayDia = {};
+      try {
+        if (HAY_BACKEND) {
+          const r = await fetch(`${API_URL}/api/replay?fecha=${fecha}`).then((x) => x.json());
+          buques = r.buques ?? {};
+        } else {
+          if (!replayDemoRef.current) {
+            const r = await fetch("/data/replay_demo.json").then((x) => x.json());
+            replayDemoRef.current = r.dias ?? {};
+            if (r.demo) onDemo();
+          }
+          buques = replayDemoRef.current?.[fecha] ?? {};
+        }
+      } catch { /* sin película para ese día: capa vacía */ }
+      if (cancelado) return;
+      replayRef.current = { fecha, buques };
+      const t = tiempoRef.current;
+      if (t?.fecha === fecha) {
+        (map.getSource("ais") as GeoJSONSource | undefined)?.setData(fotograma(buques, fecha, t.minuto));
+      }
+    })();
+    return () => { cancelado = true; };
+  }, [fecha, onDemo]);
+
+  // cambio de minuto: nuevo fotograma de la película (interpolación fluida)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !listoRef.current || !tiempo) return;
+    const replay = replayRef.current;
+    if (!replay || replay.fecha !== tiempo.fecha) return;
+    (map.getSource("ais") as GeoJSONSource | undefined)?.setData(
+      fotograma(replay.buques, tiempo.fecha, tiempo.minuto),
+    );
+  }, [tiempo]);
 
   return (
     <div className="mapa-marco">
@@ -403,10 +484,8 @@ export default function MapView({ visibles, fecha, onDemo }: Props) {
 function aplicarVisibilidad(map: MLMap, visibles: Record<string, boolean>, fecha: string | null) {
   for (const capa of CAPAS) {
     let activa = visibles[capa.id];
-    // en modo archivo: aeronaves solo en vivo (no retenemos su histórico);
-    // AIS histórico requiere backend
+    // en modo archivo: aeronaves solo en vivo (no retenemos su histórico)
     if (fecha && capa.id === "aereo") activa = false;
-    if (fecha && capa.id === "ais" && !HAY_BACKEND) activa = false;
     const v = activa ? "visible" : "none";
     for (const layerId of capa.mapLayers) {
       if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", v);

@@ -64,6 +64,27 @@ def test_vessels_viaje_en_el_tiempo():
     assert client.get("/api/vessels", params={"at": "ayer"}).status_code == 400
 
 
+def test_replay_pelicula_del_dia():
+    from datetime import timedelta
+    init_db()
+    base = utcnow().replace(hour=10, minute=0, second=0, microsecond=0)
+    with get_engine().begin() as conn:
+        for i in range(4):  # posiciones cada 5 min: el submuestreo (10 min) debe dejar 2
+            conn.execute(positions.insert().values(
+                mmsi="701000777", ts=base + timedelta(minutes=5 * i),
+                lat=-32.9 - i * 0.01, lon=-60.6,
+            ))
+    fecha = base.date().isoformat()
+    r = client.get("/api/replay", params={"fecha": fecha})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["fecha"] == fecha
+    pts = body["buques"]["701000777"]["pts"]
+    assert len(pts) == 2  # submuestreado a 10 min
+    assert pts[0][0] == 600.0  # minuto del día (10:00 UTC)
+    assert client.get("/api/replay", params={"fecha": "no-es-fecha"}).status_code == 400
+
+
 def test_events():
     init_db()
     with get_engine().begin() as conn:

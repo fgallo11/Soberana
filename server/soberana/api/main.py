@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .. import __version__
 from ..config import settings
-from ..db import init_db, latest_positions, list_events, utcnow, vessel_track
+from ..db import day_tracks, init_db, latest_positions, list_events, utcnow, vessel_track
 
 app = FastAPI(title="Soberana API", version=__version__)
 
@@ -100,6 +100,19 @@ def vessels_geojson(
             for r in rows
         ],
     }
+
+
+@app.get("/api/replay")
+def replay(response: Response, fecha: str):
+    """La 'película' de un día: recorridos AIS de todos los buques en ese día
+    calendario (UTC), submuestreados cada 10 min. El frontend interpola entre
+    puntos para mostrar movimiento fluido. Limitado por la retención hot."""
+    try:
+        dia = datetime.fromisoformat(fecha)
+    except ValueError:
+        raise HTTPException(400, "fecha inválida: se espera YYYY-MM-DD")
+    response.headers["Cache-Control"] = "public, max-age=600"
+    return {"fecha": fecha, "demo": False, "buques": day_tracks(dia)}
 
 
 @app.get("/api/vessels/{mmsi}/track")

@@ -1,118 +1,178 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { HAY_BACKEND } from "./config";
 
-/** Barra de tiempo estilo videocasetera: EN VIVO ↔ archivo de los últimos
- * 30 días, con PLAY: parado en cualquier día del pasado, reproduce el
- * avance del tiempo (1 día por tick) a velocidad seleccionable, como ver
- * los movimientos en película. Al llegar al presente vuelve a EN VIVO.
- * `fecha` null = en vivo; "YYYY-MM-DD" = modo archivo. */
+/** Barra de tiempo v2 — el modelo es "película del día":
+ *  - Elegís una FECHA (hasta 30 días atrás) y un momento DENTRO del día
+ *    con el slider (00:00–24:00).
+ *  - PLAY reproduce el movimiento a ritmo real (×1) o acelerado ×2/×5/×10.
+ *    En VIVO el play está deshabilitado: lo vivo ya corre solo.
+ *  - Los buques son película (recorridos AIS interpolados); las capas
+ *    satelitales (SAR/VIIRS) son FOTOS del día elegido y no se mueven.
+ *  `tiempo` null = en vivo; {fecha, minuto} = modo archivo. */
 
 export const DIAS_ARCHIVO = 30;
-const VELOCIDADES = [1, 2, 4]; // días por segundo
+const VELOCIDADES = [1, 2, 5, 10]; // multiplicador sobre el ritmo real
 
-interface Props {
-  fecha: string | null;
-  onFecha: (f: string | null) => void;
+export interface Tiempo {
+  fecha: string;   // YYYY-MM-DD (UTC)
+  minuto: number;  // 0..1439.99 dentro del día
 }
 
-function diaISO(offset: number): string {
+interface Props {
+  tiempo: Tiempo | null;
+  onTiempo: (t: Tiempo | null) => void;
+}
+
+function hoyISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function diaISO(offsetDias: number): string {
   const d = new Date();
-  d.setUTCDate(d.getUTCDate() - offset);
+  d.setUTCDate(d.getUTCDate() - offsetDias);
+  return d.toISOString().slice(0, 10);
+}
+
+function sumarDias(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
 function fechaLegible(iso: string): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("es-AR", {
-    weekday: "short", day: "2-digit", month: "short", year: "numeric",
+    weekday: "short", day: "2-digit", month: "short",
   });
 }
 
-export default function TimeBar({ fecha, onFecha }: Props) {
+function reloj(minuto: number): string {
+  const h = Math.floor(minuto / 60);
+  const m = Math.floor(minuto % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function minutoAhoraUTC(): number {
+  const d = new Date();
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+export default function TimeBar({ tiempo, onTiempo }: Props) {
   const [reproduciendo, setReproduciendo] = useState(false);
   const [velocidad, setVelocidad] = useState(1);
 
-  // offset 0 = hoy (vivo); 1..DIAS_ARCHIVO = días hacia atrás
-  const offset = useMemo(() => {
-    if (!fecha) return 0;
-    const ms = Date.now() - new Date(`${fecha}T12:00:00Z`).getTime();
-    return Math.min(DIAS_ARCHIVO, Math.max(1, Math.round(ms / 86_400_000)));
-  }, [fecha]);
-  const offsetRef = useRef(offset);
-  offsetRef.current = offset;
+  const tiempoRef = useRef(tiempo);
+  tiempoRef.current = tiempo;
 
-  const mover = (nuevo: number) => {
-    const o = Math.min(DIAS_ARCHIVO, Math.max(0, nuevo));
-    if (o === 0) setReproduciendo(false); // llegar al presente corta la reproducción
-    onFecha(o === 0 ? null : diaISO(o));
+  const hoy = hoyISO();
+  const minFecha = diaISO(DIAS_ARCHIVO);
+  const esHoy = tiempo?.fecha === hoy;
+
+  const irA = (t: Tiempo | null) => {
+    if (t === null) {
+      setReproduciendo(false);
+      onTiempo(null);
+      return;
+    }
+    let { fecha, minuto } = t;
+    if (fecha < minFecha) fecha = minFecha;
+    if (fecha > hoy) fecha = hoy;
+    minuto = Math.max(0, Math.min(1439.99, minuto));
+    // no se puede mirar el futuro: hoy el día llega hasta ahora
+    if (fecha === hoy) minuto = Math.min(minuto, minutoAhoraUTC());
+    onTiempo({ fecha, minuto });
   };
 
-  // motor de reproducción: avanza un día por tick hasta alcanzar el presente
+  // motor de reproducción: ritmo real ×velocidad (tick de 1 s)
   useEffect(() => {
     if (!reproduciendo) return;
     const id = window.setInterval(() => {
-      const o = offsetRef.current;
-      if (o <= 1) {
-        setReproduciendo(false);
-        onFecha(null); // llegó al presente: vuelve a EN VIVO
-      } else {
-        onFecha(diaISO(o - 1));
+      const t = tiempoRef.current;
+      if (!t) { setReproduciendo(false); return; }
+      let minuto = t.minuto + velocidad / 60; // +N segundos de datos por segundo real
+      let fecha = t.fecha;
+      if (fecha === hoyISO() && minuto >= minutoAhoraUTC()) {
+        setReproduciendo(false); // alcanzó el presente: pausa (VIVO es otro botón)
+        return;
       }
-    }, 1000 / velocidad);
+      if (minuto >= 1440) {
+        const siguiente = sumarDias(fecha, 1);
+        if (siguiente > hoyISO()) { setReproduciendo(false); return; }
+        fecha = siguiente;
+        minuto -= 1440;
+      }
+      onTiempo({ fecha, minuto });
+    }, 1000);
     return () => window.clearInterval(id);
-  }, [reproduciendo, velocidad, onFecha]);
+  }, [reproduciendo, velocidad, onTiempo]);
 
-  const togglePlay = () => {
-    if (reproduciendo) {
-      setReproduciendo(false);
-      return;
-    }
-    // play desde EN VIVO: arranca la película desde el fondo del archivo
-    if (offsetRef.current === 0) onFecha(diaISO(DIAS_ARCHIVO));
-    setReproduciendo(true);
-  };
-
-  const cambiarVelocidad = () => {
+  const cambiarVelocidad = () =>
     setVelocidad((v) => VELOCIDADES[(VELOCIDADES.indexOf(v) + 1) % VELOCIDADES.length]);
-  };
+
+  const minutoMax = useMemo(() => (esHoy ? minutoAhoraUTC() : 1439), [esHoy, tiempo]);
 
   return (
     <div className="timebar" role="group" aria-label="Viaje en el tiempo">
       <div className="tb-controles">
-        <button onClick={() => mover(offset + 1)} disabled={offset >= DIAS_ARCHIVO} title="Un día atrás">
-          ◀◀
+        <input
+          type="date"
+          className="tb-fecha-input"
+          value={tiempo?.fecha ?? ""}
+          min={minFecha}
+          max={hoy}
+          onChange={(e) => {
+            if (!e.target.value) return;
+            setReproduciendo(false);
+            irA({ fecha: e.target.value, minuto: tiempo?.minuto ?? 12 * 60 });
+          }}
+          aria-label="Elegir fecha del archivo"
+        />
+        <button
+          onClick={() => { setReproduciendo(false); irA({ fecha: sumarDias(tiempo?.fecha ?? hoy, -1), minuto: tiempo?.minuto ?? 12 * 60 }); }}
+          disabled={(tiempo?.fecha ?? hoy) <= minFecha}
+          title="Día anterior"
+        >
+          ◀
+        </button>
+        <button
+          onClick={() => { setReproduciendo(false); irA({ fecha: sumarDias(tiempo!.fecha, 1), minuto: tiempo!.minuto }); }}
+          disabled={!tiempo || tiempo.fecha >= hoy}
+          title="Día siguiente"
+        >
+          ▶
         </button>
         <button
           className={`tb-play ${reproduciendo ? "activo" : ""}`}
-          onClick={togglePlay}
-          title={reproduciendo ? "Pausar" : "Reproducir el paso del tiempo desde este punto"}
+          onClick={() => setReproduciendo((r) => !r)}
+          disabled={!tiempo}
+          title={!tiempo
+            ? "El play es para el archivo: en vivo, lo que ves ya está corriendo"
+            : reproduciendo ? "Pausar" : "Reproducir el movimiento desde este momento"}
         >
           {reproduciendo ? "❚❚" : "▶"}
         </button>
-        <button onClick={() => mover(offset - 1)} disabled={offset === 0} title="Un día adelante">
-          ▶▶
-        </button>
-        <button onClick={cambiarVelocidad} title="Velocidad de reproducción (días por segundo)">
+        <button onClick={cambiarVelocidad} disabled={!tiempo} title="Velocidad (×1 = ritmo real)">
           ×{velocidad}
         </button>
-        <button className={`tb-live ${fecha ? "" : "activo"}`} onClick={() => mover(0)} title="Volver al presente">
+        <button className={`tb-live ${tiempo ? "" : "activo"}`} onClick={() => irA(null)} title="Volver al presente">
           ● VIVO
         </button>
       </div>
+
       <input
         type="range"
         min={0}
-        max={DIAS_ARCHIVO}
+        max={minutoMax}
         step={1}
-        // el slider corre de izquierda (pasado) a derecha (presente)
-        value={DIAS_ARCHIVO - offset}
-        onChange={(e) => mover(DIAS_ARCHIVO - Number(e.target.value))}
-        aria-label={`Día mostrado: ${fecha ?? "en vivo"}`}
+        value={tiempo ? Math.floor(tiempo.minuto) : minutoMax}
+        disabled={!tiempo}
+        onChange={(e) => irA({ fecha: tiempo?.fecha ?? hoy, minuto: Number(e.target.value) })}
+        aria-label={tiempo ? `Hora del día: ${reloj(tiempo.minuto)}` : "Elegí una fecha para navegar el día"}
       />
+
       <div className="tb-estado">
-        {fecha ? (
+        {tiempo ? (
           <>
-            <span className="tb-modo archivo">{reproduciendo ? "▶ REPRODUCIENDO" : "⏪ ARCHIVO"}</span>
-            <span className="tb-fecha">{fechaLegible(fecha)}</span>
+            <span className="tb-modo archivo">{reproduciendo ? `▶ ×${velocidad}` : "⏪ ARCHIVO"}</span>
+            <span className="tb-fecha">{fechaLegible(tiempo.fecha)} · {reloj(tiempo.minuto)} UTC</span>
           </>
         ) : (
           <>
@@ -121,11 +181,11 @@ export default function TimeBar({ fecha, onFecha }: Props) {
           </>
         )}
       </div>
-      {fecha && (
+
+      {tiempo && (
         <div className="tb-nota">
-          {reproduciendo
-            ? `reproduciendo a ${velocidad} día${velocidad > 1 ? "s" : ""} por segundo — al llegar a hoy vuelve a EN VIVO`
-            : <>satélites: día seleccionado · AIS: {HAY_BACKEND ? "estado de ese día (retención 14 d)" : "requiere backend"} · aeronaves: solo en vivo</>}
+          🎬 buques: película del día (recorridos AIS interpolados) · 📷 SAR/VIIRS: foto del día elegido,
+          no se mueven · aeronaves: solo en vivo
         </div>
       )}
     </div>

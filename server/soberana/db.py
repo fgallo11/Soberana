@@ -187,3 +187,32 @@ def prune_positions() -> int:
     with eng.begin() as conn:
         res = conn.execute(delete(positions).where(positions.c.ts < cutoff))
         return res.rowcount or 0
+
+
+def day_tracks(fecha: datetime, step_min: int = 10) -> dict:
+    """Recorridos de todos los buques durante un día calendario (UTC),
+    submuestreados a un punto por buque cada `step_min` minutos.
+
+    Alimenta la 'película' del frontend: puntos [[minuto_del_día, lon, lat]]
+    por buque, que el cliente interpola para mostrar movimiento fluido.
+    """
+    eng = get_engine()
+    inicio = fecha.replace(hour=0, minute=0, second=0, microsecond=0)
+    fin = inicio + timedelta(days=1)
+    buques: dict[str, dict] = {}
+    with eng.connect() as conn:
+        q = (
+            select(positions.c.mmsi, positions.c.ts, positions.c.lat, positions.c.lon,
+                   vessels.c.name, vessels.c.flag)
+            .outerjoin(vessels, vessels.c.mmsi == positions.c.mmsi)
+            .where(positions.c.ts >= inicio, positions.c.ts < fin)
+            .order_by(positions.c.mmsi, positions.c.ts)
+        )
+        for r in conn.execute(q).mappings():
+            b = buques.setdefault(r["mmsi"], {"name": r["name"], "flag": r["flag"], "pts": []})
+            minuto = (r["ts"] - inicio).total_seconds() / 60.0
+            # submuestreo: un punto por bucket de step_min
+            if b["pts"] and minuto - b["pts"][-1][0] < step_min:
+                continue
+            b["pts"].append([round(minuto, 1), round(r["lon"], 5), round(r["lat"], 5)])
+    return buques

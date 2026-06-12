@@ -9,12 +9,43 @@ Uso: python -m soberana.ingest.demo_data
 """
 
 import json
+import math
 import random
 from datetime import timedelta
 from pathlib import Path
 
 from ..config import settings
 from ..db import utcnow
+from .static_layers import HIDROVIA
+
+
+def _acumulado(path: list[tuple[float, float]]) -> tuple[list[float], float]:
+    """Distancias acumuladas (km, aprox equirectangular) a lo largo de una traza."""
+    acc = [0.0]
+    for (lo1, la1), (lo2, la2) in zip(path, path[1:]):
+        dx = (lo2 - lo1) * 111.32 * math.cos(math.radians((la1 + la2) / 2))
+        dy = (la2 - la1) * 110.57
+        acc.append(acc[-1] + math.hypot(dx, dy))
+    return acc, acc[-1]
+
+
+def _punto_en(path: list[tuple[float, float]], acc: list[float], d_km: float) -> tuple[float, float]:
+    """Punto interpolado a `d_km` del inicio de la traza."""
+    d = max(0.0, min(d_km, acc[-1]))
+    for i in range(1, len(acc)):
+        if acc[i] >= d:
+            f = (d - acc[i - 1]) / (acc[i] - acc[i - 1] or 1e-9)
+            lo = path[i - 1][0] + (path[i][0] - path[i - 1][0]) * f
+            la = path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f
+            return lo, la
+    return path[-1]
+
+
+# ruta costera de cabotaje (Recalada → Bahía Blanca → Golfo San Matías)
+RUTA_COSTERA = [
+    (-55.90, -35.35), (-56.80, -36.40), (-57.40, -37.80), (-58.50, -38.80),
+    (-60.50, -39.30), (-62.00, -39.40), (-63.20, -41.20), (-64.50, -42.30),
+]
 
 
 def generar(out_dir: str | None = None) -> list[Path]:
@@ -117,6 +148,49 @@ def generar(out_dir: str | None = None) -> list[Path]:
             {"puerto": "San Pedro", "altura_m": 1.95, "lat": -33.679, "lon": -59.665},
             {"puerto": "Zárate", "altura_m": 1.40, "lat": -34.098, "lon": -59.028},
         ],
+    }, ensure_ascii=False))
+    escritos.append(p)
+
+    # Película demo: buques recorriendo la Hidrovía y la costa a velocidad
+    # realista (~15-22 km/h los fluviales), muestreados cada 10 minutos, para
+    # los últimos 3 días. El frontend interpola entre puntos → movimiento fluido.
+    rutas = [(list(HIDROVIA), _acumulado(HIDROVIA)), (RUTA_COSTERA, _acumulado(RUTA_COSTERA))]
+    flota = []
+    for i in range(14):
+        ruta_idx = 0 if i < 10 else 1
+        path, (acc, largo) = rutas[ruta_idx]
+        flota.append({
+            "mmsi": f"7012345{i:02d}",
+            "name": f"DEMO {'BARCAZA' if ruta_idx == 0 else 'COSTERO'} {i + 1}",
+            "path": path, "acc": acc, "largo": largo,
+            "vel_kmh": rng.uniform(14.0, 22.0),
+            "offset_km": rng.uniform(0, largo),
+            "dir": 1 if rng.random() < 0.5 else -1,
+        })
+    dias_replay: dict[str, dict] = {}
+    for d in range(0, 3):
+        fecha = (ahora - timedelta(days=d)).date().isoformat()
+        buques: dict[str, dict] = {}
+        for b in flota:
+            pts = []
+            for minuto in range(0, 1440, 10):
+                horas_totales = (2 - d) * 24 + minuto / 60.0  # tiempo corrido en los 3 días
+                # va y vuelve a lo largo de la ruta (ping-pong)
+                d_km = b["offset_km"] + b["dir"] * b["vel_kmh"] * horas_totales
+                ciclo = d_km % (2 * b["largo"])
+                if ciclo < 0:
+                    ciclo += 2 * b["largo"]
+                pos = ciclo if ciclo <= b["largo"] else 2 * b["largo"] - ciclo
+                lo, la = _punto_en(b["path"], b["acc"], pos)
+                pts.append([minuto, round(lo, 5), round(la, 5)])
+            buques[b["mmsi"]] = {"name": b["name"], "flag": "ARG", "pts": pts}
+        dias_replay[fecha] = buques
+    p = out / "replay_demo.json"
+    p.write_text(json.dumps({
+        "demo": True,
+        "generado": ahora.isoformat(),
+        "nota": "PELÍCULA DE DEMOSTRACIÓN — recorridos sintéticos, no son buques reales",
+        "dias": dias_replay,
     }, ensure_ascii=False))
     escritos.append(p)
     return escritos
