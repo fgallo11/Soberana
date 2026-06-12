@@ -103,16 +103,19 @@ def vessels_geojson(
 
 
 @app.get("/api/replay")
-def replay(response: Response, fecha: str):
+def replay(response: Response, fecha: str, step_min: int = Query(10, ge=1, le=60)):
     """La 'película' de un día: recorridos AIS de todos los buques en ese día
-    calendario (UTC), submuestreados cada 10 min. El frontend interpola entre
-    puntos para mostrar movimiento fluido. Limitado por la retención hot."""
+    calendario (UTC). `step_min` controla el submuestreo (default 10 min):
+    es una decisión de tamaño de respuesta NUESTRA, no un límite de la
+    fuente — el AIS llega cada pocos segundos y la DB guarda todo; con
+    step_min=1 la película sale con resolución de 1 minuto. El frontend
+    interpola entre puntos. Limitado por la retención hot."""
     try:
         dia = datetime.fromisoformat(fecha)
     except ValueError:
         raise HTTPException(400, "fecha inválida: se espera YYYY-MM-DD")
     response.headers["Cache-Control"] = "public, max-age=600"
-    return {"fecha": fecha, "demo": False, "buques": day_tracks(dia)}
+    return {"fecha": fecha, "demo": False, "step_min": step_min, "buques": day_tracks(dia, step_min=step_min)}
 
 
 @app.get("/api/vessels/{mmsi}/track")

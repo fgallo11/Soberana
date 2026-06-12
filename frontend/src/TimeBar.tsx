@@ -90,12 +90,14 @@ export default function TimeBar({ tiempo, onTiempo }: Props) {
       let minuto = t.minuto + velocidad / 60; // +N segundos de datos por segundo real
       let fecha = t.fecha;
       if (fecha === hoyISO() && minuto >= minutoAhoraUTC()) {
-        setReproduciendo(false); // alcanzó el presente: pausa (VIVO es otro botón)
+        // la película alcanzó el presente: se pasa a EN VIVO, naturalmente
+        setReproduciendo(false);
+        onTiempo(null);
         return;
       }
       if (minuto >= 1440) {
         const siguiente = sumarDias(fecha, 1);
-        if (siguiente > hoyISO()) { setReproduciendo(false); return; }
+        if (siguiente > hoyISO()) { setReproduciendo(false); onTiempo(null); return; }
         fecha = siguiente;
         minuto -= 1440;
       }

@@ -311,6 +311,61 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         map.addLayer({ id: "gfw-pesca", type: "raster", source: "gfw-pesca", paint: { "raster-opacity": 0.7 } });
       }
 
+      // ---------- alarmas: apagones de AIS sobre el mapa ----------
+      try {
+        const ev = await fetch(HAY_BACKEND ? `${API_URL}/api/events?limit=500` : "/data/events.json")
+          .then((r) => r.json());
+        if (ev.demo || (ev.events ?? []).some((e: any) => e.demo)) onDemo();
+        map.addSource("alarmas", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: (ev.events ?? [])
+              .filter((e: any) => e.lat != null && e.lon != null && e.type.startsWith("ais_gap"))
+              .map((e: any) => ({
+                type: "Feature",
+                geometry: { type: "Point", coordinates: [e.lon, e.lat] },
+                properties: {
+                  id: e.id,
+                  vessel: e.vessel_name || (e.mmsi ? `MMSI ${e.mmsi}` : "no identificado"),
+                  flag: e.flag,
+                  confianza: e.confidence,
+                  inicio: e.started_at,
+                  fin: e.ended_at,
+                  dia: (e.started_at ?? "").slice(0, 10),
+                  demo: Boolean(e.demo),
+                },
+              })),
+          },
+        });
+        map.addLayer({
+          id: "alarmas-halo", type: "circle", source: "alarmas",
+          paint: {
+            "circle-radius": 11,
+            "circle-color": "transparent",
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": ["case", ["==", ["get", "confianza"], "alta"], "#ff9f1a", "#9aa7b3"],
+            "circle-stroke-opacity": 0.55,
+          },
+        });
+        map.addLayer({
+          id: "alarmas-circle", type: "circle", source: "alarmas",
+          paint: {
+            "circle-radius": 4.5,
+            "circle-color": ["case", ["==", ["get", "confianza"], "alta"], "#ff9f1a", "#9aa7b3"],
+            "circle-stroke-color": "#000",
+            "circle-stroke-width": 1,
+          },
+        });
+        // latido de radar: el halo pulsa para llamar la atención sin sonido
+        let creciendo = true;
+        timers.push(window.setInterval(() => {
+          if (!map.getLayer("alarmas-halo")) return;
+          creciendo = !creciendo;
+          map.setPaintProperty("alarmas-halo", "circle-radius", creciendo ? 14 : 9);
+        }, 700));
+      } catch { /* sin eventos disponibles: capa ausente */ }
+
       // ---------- AIS en vivo (requiere backend) ----------
       map.addSource("ais", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({
@@ -391,6 +446,14 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
             ["Altitud", p.alt_ft != null ? `${p.alt_ft} ft` : null],
             ["Militar", p.mil ? "sí" : "no"],
           ], p.mil ? "Aeronave militar captada por la red comunitaria ADS-B." : undefined)],
+        ["alarmas-circle", (p) =>
+          popupHTML(`🚨 Apagón de AIS — ${p.vessel}`, [
+            ["Bandera", p.flag],
+            ["Confianza", p.confianza],
+            ["Inicio", fechaLocal(p.inicio)],
+            ["Reaparición", p.fin ? fechaLocal(p.fin) : "sin registrar"],
+          ], (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
+             "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos.")],
         ["ficz-fill", (p) => popupHTML(p.nombre, [], p.detalle)],
         ["amps-fill", (p) => popupHTML(p.nombre, [], p.detalle)],
       ];
@@ -514,6 +577,12 @@ function aplicarFecha(map: MLMap, fecha: string | null) {
       ? ["==", ["get", "fecha"], fecha]
       // en vivo: la noche más reciente disponible (≈ ayer)
       : ["any", ["!", ["has", "fecha"]], [">", ["get", "fecha"], restarDias(hasta, 2)]]);
+  }
+  if (map.getLayer("alarmas-circle")) {
+    // archivo: solo apagones iniciados ese día; vivo: todos los recientes
+    const f = fecha ? ["==", ["get", "dia"], fecha] : null;
+    map.setFilter("alarmas-circle", f as any);
+    map.setFilter("alarmas-halo", f as any);
   }
   if (HAY_BACKEND && map.getSource("gfw-pesca")) {
     const src = map.getSource("gfw-pesca") as maplibregl.RasterTileSource;
