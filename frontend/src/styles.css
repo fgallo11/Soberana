@@ -224,6 +224,10 @@ body {
   color: #04140a; background: var(--rojo); border-color: var(--rojo);
   animation: latido 1.6s ease-in-out infinite;
 }
+.tb-controles .tb-play.activo {
+  color: #04140a; background: var(--fosforo); border-color: var(--fosforo);
+  animation: latido 1.2s ease-in-out infinite;
+}
 @keyframes latido { 50% { filter: brightness(1.35); } }
 
 .timebar input[type="range"] {
