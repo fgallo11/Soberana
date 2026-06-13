@@ -250,7 +250,7 @@ def generar(out_dir: str | None = None) -> list[Path]:
             _feature(Point(-49.5, -74.0), nombre="ANTÁRTIDA ARGENTINA", tipo="etiqueta"),
             *[
                 _feature(Point(lon, lat), nombre=n, tipo="isla", descripcion=desc,
-                         fuente="Cartografía oficial argentina (ubicación aproximada)")
+                         fuente="Cartografía y marco ONU: fuentes oficiales argentinas (Cancillería / IGN)")
                 for n, lon, lat, desc in ISLAS_ATLANTICO_SUR
             ],
             *[

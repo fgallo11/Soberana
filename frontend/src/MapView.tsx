@@ -528,7 +528,8 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         ["ocupados-fill", (p, c) =>
           infoHTML(`🔴 ${p.nombre}`, [["Estado", p.estado]],
             { coord: c, descripcion: "Territorio argentino bajo ocupación británica.",
-              nota: p.marco_onu || "Argentina reclama la soberanía; la ONU reconoce la disputa pendiente." })],
+              nota: p.marco_onu || "Argentina reclama la soberanía; la ONU reconoce la disputa pendiente.",
+              fuente: "Marco ONU según fuentes oficiales argentinas (Cancillería)" })],
         ["ficz-fill", infoGenerico],
         ["amps-fill", infoGenerico],
         ["zee-fill", infoGenerico],
