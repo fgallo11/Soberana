@@ -95,7 +95,7 @@ BASES_MILITARES = [
 SECTOR_ANTARTICO = [(-74.0, -60.0), (-25.0, -60.0), (-25.0, -85.0), (-74.0, -85.0), (-74.0, -60.0)]
 
 ISLAS_ATLANTICO_SUR = [
-    ("Islas Malvinas", -59.50, -51.70,
+    ("Islas Malvinas", -58.90, -51.80,
      "Archipiélago argentino bajo ocupación británica desde 1833. ~3.600 habitantes. "
      "Reclamadas por Argentina; la ONU reconoce la disputa de soberanía pendiente."),
     ("Islas Georgias del Sur", -36.50, -54.30,

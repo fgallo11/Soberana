@@ -45,19 +45,22 @@ def generar(out_dir: str | None = None) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     escritos: list[Path] = []
 
-    # --- tierra (50m, recortada y simplificada) ---
-    land = _bajar("ne_50m_land")
+    # --- tierra (10m: resolución necesaria para que las islas chicas del
+    #     Atlántico Sur y la Antártida —Laurie/Orcadas, Shetland, Marambio—
+    #     se dibujen y los puntos no floten en el agua) ---
+    land = _bajar("ne_10m_land")
     geoms = []
     for f in land["features"]:
         g = shape(f["geometry"])
         if g.intersects(CAJA):
             geoms.append(g.intersection(CAJA))
-    tierra = unary_union(geoms).simplify(0.01)
+    # tolerancia fina (~0.005° ≈ 500 m) para conservar las islas chicas
+    tierra = unary_union(geoms).simplify(0.005)
     p = out / "tierra.geojson"
     p.write_text(json.dumps({
         "type": "FeatureCollection",
         "metadata": {
-            "fuente": "Natural Earth 50m (dominio público)",
+            "fuente": "Natural Earth 10m (dominio público)",
             "nota": "fallback de tierra: el territorio se ve aunque el basemap externo falle",
         },
         "features": [{"type": "Feature", "geometry": mapping(tierra), "properties": {}}],
