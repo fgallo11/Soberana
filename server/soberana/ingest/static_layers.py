@@ -96,6 +96,33 @@ ISLAS_ATLANTICO_SUR = [
     ("Islas Shetland del Sur", -58.50, -62.10),
 ]
 
+# Bases antárticas y asentamientos en las islas (conocimiento público,
+# coordenadas aproximadas al km): nombre, lon, lat, país, nota
+BASES_ANTARTICAS = [
+    # --- argentinas permanentes ---
+    ("Base Orcadas", -44.74, -60.74, "Argentina",
+     "La base antártica permanente más antigua del mundo (1904) — Islas Orcadas del Sur"),
+    ("Base Marambio", -56.62, -64.24, "Argentina", "Pista aérea principal del sector — isla Marambio"),
+    ("Base Esperanza", -56.98, -63.40, "Argentina", "Base con población civil permanente"),
+    ("Base Carlini", -58.67, -62.24, "Argentina", "Investigación científica — isla 25 de Mayo"),
+    ("Base San Martín", -67.10, -68.13, "Argentina", ""),
+    ("Base Belgrano II", -34.62, -77.87, "Argentina", "La base argentina más austral"),
+    ("Base Petrel", -56.28, -63.47, "Argentina", "En reactivación como polo logístico"),
+    # --- extranjeras dentro del Sector Antártico Argentino ---
+    ("Rothera (Reino Unido)", -68.13, -67.57, "Reino Unido", "Principal base británica del sector"),
+    ("Halley VI (Reino Unido)", -26.57, -75.57, "Reino Unido", ""),
+    ("O'Higgins (Chile)", -57.90, -63.32, "Chile", ""),
+    ("Frei / Villa Las Estrellas (Chile)", -58.96, -62.20, "Chile", "Base con población civil"),
+    ("Gran Muralla (China)", -58.96, -62.22, "China", ""),
+    ("Bellingshausen (Rusia)", -58.97, -62.20, "Rusia", ""),
+    ("Comandante Ferraz (Brasil)", -58.39, -62.08, "Brasil", ""),
+    # --- asentamientos en las islas del Atlántico Sur ---
+    ("Puerto Argentino", -57.85, -51.69, "Reino Unido",
+     "Capital de las Islas Malvinas, bajo ocupación británica (los británicos lo llaman Stanley)"),
+    ("Grytviken / King Edward Point", -36.51, -54.28, "Reino Unido",
+     "Estación administrada por el Reino Unido — Islas Georgias del Sur"),
+]
+
 def _fc(features: list[dict], **metadata) -> dict:
     return {"type": "FeatureCollection", "metadata": metadata, "features": features}
 
@@ -171,8 +198,14 @@ def generar(out_dir: str | None = None) -> list[Path]:
                 _feature(Point(lon, lat), nombre=n, tipo="isla")
                 for n, lon, lat in ISLAS_ATLANTICO_SUR
             ],
+            *[
+                _feature(Point(lon, lat), nombre=n, tipo="base", pais=pais, nota=nota,
+                         argentina=(pais == "Argentina"))
+                for n, lon, lat, pais, nota in BASES_ANTARTICAS
+            ],
         ],
-        descripcion="Sector Antártico Argentino e islas del Atlántico Sur (cartografía oficial argentina)",
+        descripcion="Sector Antártico Argentino, islas del Atlántico Sur, bases antárticas "
+                     "y asentamientos (cartografía oficial argentina; coordenadas aproximadas)",
     ), ensure_ascii=False))
     escritos.append(p)
 

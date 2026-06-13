@@ -1,4 +1,4 @@
-"""Trazado real de la Hidrovía Paraná-Paraguay.
+"""Trazado real de la Hidrovía Paraná-Paraguay y del río Uruguay.
 
 Reemplaza la polilínea a mano alzada de la v1 (21 vértices que cortaban
 campo) por el curso real del río, con tres niveles de fuente:
@@ -58,7 +58,7 @@ TRONCAL_CURADA = [
 OVERPASS_QUERY = """
 [out:json][timeout:120];
 (
-  relation["waterway"="river"]["name"~"^Río Paraná$|^Río Paraguay$|Paraná de las Palmas|Paraná Guazú"]({lat_min},{lon_min},{lat_max},{lon_max});
+  relation["waterway"="river"]["name"~"^Río Paraná$|^Río Paraguay$|^Río Uruguay$|Paraná de las Palmas|Paraná Guazú"]({lat_min},{lon_min},{lat_max},{lon_max});
   way["waterway"~"^(river|canal)$"]["name"~"Emilio Mitre|Punta Indio|Paraná de las Palmas"]({lat_min},{lon_min},{lat_max},{lon_max});
 );
 out geom;
@@ -153,7 +153,7 @@ def _desde_natural_earth() -> tuple[list[dict], list[list[tuple[float, float]]]]
     segmentos: list[list[tuple[float, float]]] = []
     for f in data["features"]:
         nombre = f["properties"].get("name") or ""
-        if not any(k in nombre for k in ("Paraná", "Parana", "Paraguay", "Paraguai")):
+        if not any(k in nombre for k in ("Paraná", "Parana", "Paraguay", "Paraguai", "Uruguay", "Uruguai")):
             continue
         if nombre in ("Paranaíba", "Paranapanema"):
             continue

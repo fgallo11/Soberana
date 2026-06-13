@@ -30,9 +30,10 @@ export default function Colaborar() {
             <code>docs/despliegue.md</code>, costo $0). Quien sepa de Linux/servidores puede ayudar a operarlo.
           </li>
           <li>
-            <b>Receptores AIS ciudadanos:</b> una antena de ~USD 100 en un techo con vista al río o al mar
-            (Rosario, Zárate, Buenos Aires, Bahía Blanca…) nos da cobertura propia, independiente de terceros.
-            Si tenés el techo, nosotros te guiamos con el resto.
+            <b>Datos y acceso a datos:</b> esto es lo que más suma. ¿Ya operás un receptor AIS o de ADS-B?
+            ¿Trabajás en un puerto, una terminal, un organismo con datos que deberían ser públicos? ¿Tenés
+            acceso legítimo a una fuente que nos falta? Compartir el feed o el dato es la colaboración más
+            valiosa que existe para este proyecto.
           </li>
           <li>
             <b>Verificación de geometrías:</b> varias capas están marcadas “aproximadas” (ZEE, AMPs, FOCZ).
@@ -82,6 +83,12 @@ export default function Colaborar() {
         <h3>Las reglas del juego (no negociables)</h3>
         <ul>
           <li><b>Gratuito para siempre, sin publicidad, sin cuentas.</b> Infraestructura de costo cero.</li>
+          <li>
+            <b>No pedimos plata.</b> Colaborar acá no cuesta dinero y no invitamos a nadie a gastarlo. Si
+            alguien, por su propia voluntad, quiere bancar un servidor o el acceso a una base de datos paga,
+            bienvenido sea — pero ese no es el objetivo ni lo vamos a pedir. Lo que buscamos son datos,
+            tiempo y ojos.
+          </li>
           <li>
             <b>Evidencia, no condena:</b> el mapa muestra actividad <i>aparente</i> con su nivel de confianza
             y su retraso declarado. Nunca acusamos; documentamos para que se pueda investigar.

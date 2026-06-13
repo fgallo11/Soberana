@@ -47,6 +47,12 @@ RUTA_COSTERA = [
     (-60.50, -39.30), (-62.00, -39.40), (-63.20, -41.20), (-64.50, -42.30),
 ]
 
+# ruta del río Uruguay (Punta Gorda → Concepción del Uruguay → Concordia)
+RUTA_URUGUAY = [
+    (-58.40, -33.92), (-58.35, -33.55), (-58.30, -33.10), (-58.25, -32.80),
+    (-58.22, -32.48), (-58.12, -32.20), (-58.05, -31.80), (-58.00, -31.40),
+]
+
 
 def generar(out_dir: str | None = None) -> list[Path]:
     out = Path(out_dir or settings.data_dir)
@@ -156,14 +162,16 @@ def generar(out_dir: str | None = None) -> list[Path]:
     # los fluviales), muestreados cada 10 minutos, para los últimos 3 días.
     # El frontend interpola entre puntos → movimiento fluido.
     troncal = cargar_troncal(str(out))
-    rutas = [(troncal, _acumulado(troncal)), (RUTA_COSTERA, _acumulado(RUTA_COSTERA))]
+    rutas = [(troncal, _acumulado(troncal)), (RUTA_COSTERA, _acumulado(RUTA_COSTERA)),
+             (RUTA_URUGUAY, _acumulado(RUTA_URUGUAY))]
+    nombres_ruta = ["BARCAZA", "COSTERO", "FLUVIAL R.URUGUAY"]
     flota = []
     for i in range(14):
-        ruta_idx = 0 if i < 10 else 1
+        ruta_idx = 0 if i < 9 else (2 if i < 12 else 1)
         path, (acc, largo) = rutas[ruta_idx]
         flota.append({
             "mmsi": f"7012345{i:02d}",
-            "name": f"DEMO {'BARCAZA' if ruta_idx == 0 else 'COSTERO'} {i + 1}",
+            "name": f"DEMO {nombres_ruta[ruta_idx]} {i + 1}",
             "path": path, "acc": acc, "largo": largo,
             "vel_kmh": rng.uniform(14.0, 22.0),
             "offset_km": rng.uniform(0, largo),

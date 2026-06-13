@@ -193,6 +193,24 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         },
         paint: { "text-color": "#75aadb", "text-halo-color": "#04131c", "text-halo-width": 1.2 },
       });
+      map.addLayer({
+        id: "antartida-bases", type: "circle", source: "antartida",
+        filter: ["==", ["get", "tipo"], "base"],
+        paint: {
+          "circle-radius": 5,
+          "circle-color": ["case", ["get", "argentina"], "#2ecc71", "#ff5e57"],
+          "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.2,
+        },
+      });
+      map.addLayer({
+        id: "antartida-bases-label", type: "symbol", source: "antartida", minzoom: 3.4,
+        filter: ["==", ["get", "tipo"], "base"],
+        layout: {
+          "text-field": ["get", "nombre"], "text-font": FUENTE_TEXTO,
+          "text-size": 9.5, "text-offset": [0, 1], "text-anchor": "top",
+        },
+        paint: { "text-color": "#dfe6e9", "text-halo-color": "#000", "text-halo-width": 1 },
+      });
 
       map.addSource("ficz", { type: "geojson", data: "/data/ficz_focz.geojson" });
       map.addLayer({
@@ -431,6 +449,7 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
       // ---------- popups ----------
       const conPopup: Array<[string, (p: any) => string]> = [
         ["bases-circle", (p) => popupHTML(p.nombre, [["Fuerza", p.fuerza], ["País", p.pais]], p.nota)],
+        ["antartida-bases", (p) => popupHTML(p.nombre, [["País", p.pais]], p.nota)],
         ["puertos-circle", (p) => popupHTML(`Puerto ${p.nombre}`, [["Tipo", p.tipo]])],
         ["sar-circle", (p) =>
           popupHTML(

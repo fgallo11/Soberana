@@ -27,9 +27,10 @@ export const CAPAS: CapaDef[] = [
     id: "antartida",
     grupo: "Soberanía",
     titulo: "Antártida Argentina e islas",
-    descripcion: "Sector Antártico Argentino (25°O–74°O al sur del paralelo 60°S) e islas del Atlántico Sur.",
+    descripcion:
+      "Sector Antártico Argentino (25°O–74°O al sur del paralelo 60°S), islas del Atlántico Sur, bases antárticas (verde: argentinas; rojo: extranjeras dentro del sector) y asentamientos como Puerto Argentino y Grytviken.",
     badge: "estático",
-    mapLayers: ["antartida-fill", "antartida-line", "antartida-label"],
+    mapLayers: ["antartida-fill", "antartida-line", "antartida-label", "antartida-bases", "antartida-bases-label"],
     defaultOn: true,
   },
   {

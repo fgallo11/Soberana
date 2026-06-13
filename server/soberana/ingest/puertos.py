@@ -38,7 +38,10 @@ PUERTOS_BASE = [
     ("Ramallo", -60.005, -33.486, "fluvial"), ("San Pedro", -59.665, -33.679, "fluvial"),
     ("Zárate", -59.028, -34.098, "fluvial"), ("Campana", -58.959, -34.158, "fluvial"),
     ("Buenos Aires", -58.370, -34.580, "fluvial"), ("Dock Sud", -58.350, -34.650, "fluvial"),
-    ("La Plata", -57.880, -34.850, "fluvial"),
+    ("La Plata", -57.880, -34.850, "fluvial"), ("Ibicuy", -59.157, -33.738, "fluvial"),
+    # río Uruguay (margen argentina)
+    ("Gualeguaychú", -58.516, -33.010, "fluvial"), ("Concepción del Uruguay", -58.230, -32.480, "fluvial"),
+    ("Colón", -58.140, -32.220, "fluvial"), ("Concordia", -58.020, -31.390, "fluvial"),
     ("Bahía Blanca", -62.270, -38.790, "marítimo"), ("Quequén", -58.700, -38.580, "marítimo"),
     ("Mar del Plata", -57.530, -38.030, "marítimo"), ("Puerto Madryn", -65.030, -42.760, "marítimo"),
     ("Comodoro Rivadavia", -67.480, -45.860, "marítimo"), ("Puerto Deseado", -65.900, -47.750, "marítimo"),
