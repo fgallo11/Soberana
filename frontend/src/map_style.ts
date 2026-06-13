@@ -24,40 +24,37 @@ export const ESTILO_ESPIA: StyleSpecification = {
     ocupados: { type: "geojson", data: "/data/territorios_ocupados.geojson" },
   },
   layers: [
-    // el fondo es el océano; la tierra se dibuja encima desde datos propios
+    // Modelo: el océano es el fondo. La tierra propia (Natural Earth) se
+    // dibuja como RELLENO de respaldo, SIN su propia línea de costa: la costa
+    // visible la define el agua de OpenFreeMap (alta resolución) dibujada
+    // encima, que recorta el relleno grueso a la costa real. Así no hay dos
+    // litorales superpuestos. Si OFM no carga, el relleno solo ya muestra la
+    // tierra (modo degradado).
     { id: "fondo", type: "background", paint: { "background-color": "#04111a" } },
     {
       id: "tierra-fill",
       type: "fill",
       source: "tierra",
-      paint: { "fill-color": "#18271c" },
-    },
-    {
-      id: "tierra-costa",
-      type: "line",
-      source: "tierra",
-      paint: { "line-color": "#35634a", "line-width": 0.8, "line-opacity": 0.9 },
+      paint: { "fill-color": "#15241a" },
     },
     {
       id: "territorio-arg",
       type: "fill",
       source: "territorio",
-      paint: { "fill-color": "#245130", "fill-opacity": 0.55 },
+      paint: { "fill-color": "#245130", "fill-opacity": 0.45 },
     },
-    // territorios ocupados: silueta ROJA encima del verde
+    // territorios ocupados: silueta ROJA (relleno; el agua de OFM la recorta
+    // a la costa real de cada isla)
     {
       id: "ocupados-fill",
       type: "fill",
       source: "ocupados",
-      paint: { "fill-color": "#c0392b", "fill-opacity": 0.85 },
+      paint: { "fill-color": "#c0392b", "fill-opacity": 0.8 },
     },
     {
-      id: "ocupados-costa",
-      type: "line",
-      source: "ocupados",
-      paint: { "line-color": "#ff5e57", "line-width": 1.1 },
-    },
-    {
+      // agua de OpenFreeMap: define la costa de alta resolución y recorta los
+      // rellenos de arriba. Mismo color que el fondo para que el recorte sea
+      // invisible (no genera una segunda línea de costa).
       id: "agua",
       type: "fill",
       source: "omt",
