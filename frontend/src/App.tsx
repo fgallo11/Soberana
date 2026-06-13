@@ -16,6 +16,7 @@ export default function App() {
   );
   const [demo, setDemo] = useState(false);
   const [tiempo, setTiempo] = useState<Tiempo | null>(null); // null = en vivo
+  const [panelAbierto, setPanelAbierto] = useState(false); // cajón de capas (móvil)
   const [visibles, setVisibles] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CAPAS.map((c) => [c.id, c.defaultOn && !(c.requiereBackend && !HAY_BACKEND)])),
   );
@@ -66,7 +67,15 @@ export default function App() {
 
       {pestania === "mapa" && (
         <div className="cuerpo">
-          <aside className="panel">
+          <button
+            className="toggle-capas"
+            onClick={() => setPanelAbierto((v) => !v)}
+            aria-expanded={panelAbierto}
+          >
+            {panelAbierto ? "✕ CERRAR" : "▣ CAPAS"}
+          </button>
+          {panelAbierto && <div className="panel-backdrop" onClick={() => setPanelAbierto(false)} />}
+          <aside className={`panel ${panelAbierto ? "abierto" : ""}`}>
             {grupos.map(([grupo, capas]) => (
               <section key={grupo}>
                 <h3>{grupo}</h3>

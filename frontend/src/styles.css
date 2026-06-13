@@ -259,10 +259,74 @@ body {
   border-top: 1px dashed var(--borde-suave); padding-top: 0.3rem;
 }
 
+/* botón flotante para abrir el cajón de capas — solo móvil */
+.toggle-capas { display: none; }
+.panel-backdrop { display: none; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 760px) {
-  .cuerpo { flex-direction: column; }
-  .panel { width: 100%; max-height: 38vh; border-right: none; border-bottom: 2px solid var(--borde); }
+  /* cabecera compacta: marca a la izquierda, pestañas en fila propia que scrollea */
+  .cabecera { gap: 0.4rem 0.6rem; padding: 0.45rem 0.7rem; }
+  .marca { gap: 0.5rem; }
+  .marca h1 { font-size: 0.8rem; }
+  .marca .lema { display: none; }
+  .pestanias {
+    width: 100%; order: 3; gap: 0.3rem;
+    overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px; scrollbar-width: none;
+  }
+  .pestanias::-webkit-scrollbar { display: none; }
+  .pestanias button { flex: 0 0 auto; font-size: 0.5rem; padding: 0.45rem 0.55rem; }
+
+  /* el mapa ocupa todo; el panel es un cajón deslizable desde la izquierda */
+  .cuerpo { flex-direction: column; position: relative; }
   .mapa-marco { border-left: none; }
-  .marca h1 { font-size: 0.85rem; }
+  .mapa-zona { width: 100%; }
+
+  .panel {
+    position: absolute; top: 0; left: 0; z-index: 30;
+    width: min(86%, 340px); height: 100%; max-height: none;
+    border-right: 2px solid var(--borde); border-bottom: none;
+    transform: translateX(-102%);
+    transition: transform 0.22s ease-out;
+    box-shadow: 6px 0 18px rgba(0, 0, 0, 0.6);
+    padding-bottom: 5rem; /* deja aire sobre la barra de tiempo */
+  }
+  .panel.abierto { transform: translateX(0); }
+
+  .panel-backdrop {
+    display: block; position: absolute; inset: 0; z-index: 20;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  .toggle-capas {
+    display: block; position: absolute; top: 10px; left: 10px; z-index: 31;
+    background: var(--panel); color: var(--fosforo);
+    border: 2px solid var(--borde); box-shadow: 3px 3px 0 #000;
+    font-family: var(--fuente-pixel); font-size: 0.55rem;
+    padding: 0.55rem 0.7rem; cursor: pointer;
+  }
+
+  /* targets táctiles más grandes en los checkboxes de capas */
+  .capa { padding: 0.6rem 0.35rem; }
+  .capa input { transform: scale(1.25); margin-right: 0.7rem; }
+
+  /* barra de tiempo: apila estado / controles / slider para que entre */
+  .timebar {
+    left: 8px; right: 8px; bottom: 8px; transform: none; width: auto;
+    grid-template-columns: 1fr; gap: 0.45rem; padding: 0.5rem 0.6rem;
+  }
+  .tb-controles { flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
+  .tb-controles button { font-size: 0.5rem; padding: 0.45rem 0.55rem; }
+  .tb-fecha-input { flex: 1 1 8rem; font-size: 1rem; padding: 0.4rem 0.4rem; }
+  .tb-estado { align-items: center; min-width: 0; order: -1; }
+
+  /* lectura cómoda en páginas de texto */
+  .log, .metodologia { padding: 1rem 0.9rem 4rem; }
+}
+
+/* pantallas muy chicas: achicar tabs y título */
+@media (max-width: 380px) {
+  .pestanias button { font-size: 0.45rem; padding: 0.4rem 0.45rem; }
+  .marca h1 { font-size: 0.7rem; }
 }
