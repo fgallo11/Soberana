@@ -115,12 +115,48 @@ function fechaLocal(iso?: string | null): string {
   }
 }
 
-function popupHTML(titulo: string, filas: Array<[string, unknown]>, nota?: string): string {
+function fmtCoord(lng: number, lat: number): string {
+  const ns = lat < 0 ? "S" : "N";
+  const ew = lng < 0 ? "O" : "E";
+  return `${Math.abs(lat).toFixed(4)}°${ns}, ${Math.abs(lng).toFixed(4)}°${ew}`;
+}
+
+interface PopupOpts {
+  descripcion?: string;
+  nota?: string;
+  fuente?: string;
+  coord?: [number, number]; // [lng, lat]
+}
+
+/** Renderizador único de info: título + datos + descripción + nota + fuente + coordenadas. */
+function infoHTML(titulo: string, filas: Array<[string, unknown]>, opts: PopupOpts = {}): string {
   const cuerpo = filas
     .filter(([, v]) => v !== null && v !== undefined && v !== "")
     .map(([k, v]) => `<div class="pp-row"><span>${k}</span><b>${v}</b></div>`)
     .join("");
-  return `<div class="pp"><h4>${titulo}</h4>${cuerpo}${nota ? `<p class="pp-nota">${nota}</p>` : ""}</div>`;
+  const desc = opts.descripcion ? `<p class="pp-desc">${opts.descripcion}</p>` : "";
+  const nota = opts.nota ? `<p class="pp-nota">${opts.nota}</p>` : "";
+  const coord = opts.coord ? `<div class="pp-coord">📍 ${fmtCoord(opts.coord[0], opts.coord[1])}</div>` : "";
+  const fuente = opts.fuente ? `<div class="pp-fuente">fuente: ${opts.fuente}</div>` : "";
+  return `<div class="pp"><h4>${titulo}</h4>${cuerpo}${desc}${nota}${coord}${fuente}</div>`;
+}
+
+/** Popup genérico para features estáticas (zonas, puntos de contexto): toma los
+ * campos conocidos que existan en las properties. */
+function infoGenerico(p: any, coord: [number, number]): string {
+  const filas: Array<[string, unknown]> = [
+    ["País", p.pais],
+    ["Fuerza", p.fuerza],
+    ["Tipo", p.tipo && !["isla", "base", "sector", "curso", "troncal", "milla_200"].includes(p.tipo) ? p.tipo : null],
+    ["Río", p.rio],
+  ];
+  const titulo = p.extranjera || (p.pais && p.pais !== "Argentina") ? `🔴 ${p.nombre}` : p.nombre;
+  return infoHTML(titulo, filas, {
+    descripcion: p.descripcion,
+    nota: p.detalle && p.detalle !== p.descripcion ? p.detalle : undefined,
+    fuente: p.fuente,
+    coord,
+  });
 }
 
 export default function MapView({ visibles, tiempo, onDemo }: Props) {
@@ -447,53 +483,79 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
       timers.push(window.setInterval(cargarAeronaves, 30_000));
 
       // ---------- popups ----------
-      const conPopup: Array<[string, (p: any) => string]> = [
-        ["bases-circle", (p) => popupHTML(p.nombre, [["Fuerza", p.fuerza], ["País", p.pais]], p.nota)],
-        ["antartida-bases", (p) => popupHTML(p.nombre, [["País", p.pais]], p.nota)],
-        ["puertos-circle", (p) => popupHTML(`Puerto ${p.nombre}`, [["Tipo", p.tipo]])],
-        ["sar-circle", (p) =>
-          popupHTML(
+      // c = [lng, lat] del punto a mostrar (geometría del feature si es Point, si no el click)
+      // El ORDEN define prioridad: primero puntos (targets chicos), después
+      // líneas, y al final los rellenos grandes (que si no taparían todo).
+      const renderers: Array<[string, (p: any, c: [number, number]) => string]> = [
+        // --- puntos dinámicos ---
+        ["sar-circle", (p, c) =>
+          infoHTML(
             p.matched ? "Detección SAR (correlacionada con AIS)" : "Detección SAR no correlacionada con AIS",
             [["Fecha", p.fecha], ["Fuente", p.fuente ?? "GFW / Sentinel-1"]],
-            p.matched ? undefined :
-              "Un buque presente que no transmitía AIS. NO implica por sí solo actividad ilegal.",
-          )],
-        ["viirs-circle", (p) => popupHTML("Luz de barco (VIIRS)", [["Fecha", p.fecha]],
-          "Detección nocturna por luz. Típicamente flota potera. No identifica al buque.")],
-        ["ais-circle", (p) =>
-          popupHTML(p.name || `MMSI ${p.mmsi}`, [
+            { coord: c, nota: p.matched ? undefined :
+              "Un buque presente que no transmitía AIS. NO implica por sí solo actividad ilegal." })],
+        ["viirs-circle", (p, c) => infoHTML("Luz de barco (VIIRS)", [["Fecha", p.fecha]],
+          { coord: c, nota: "Detección nocturna por luz. Típicamente flota potera. No identifica al buque." })],
+        ["ais-circle", (p, c) =>
+          infoHTML(p.name || `MMSI ${p.mmsi}`, [
             ["MMSI", p.mmsi], ["Bandera", p.flag], ["Velocidad", p.sog != null ? `${p.sog} kn` : null],
             ["Último contacto", fechaLocal(p.ts)],
-          ], "Posición autoreportada por AIS: puede ser falseada.")],
-        ["adsb-circle", (p) =>
-          popupHTML(p.callsign || p.hex, [
+          ], { coord: c, nota: "Posición autoreportada por AIS: puede ser falseada." })],
+        ["adsb-circle", (p, c) =>
+          infoHTML((p.callsign || p.hex) + (p.mil ? " 🔶" : ""), [
             ["Matrícula", p.reg], ["Tipo", p.type],
             ["Altitud", p.alt_ft != null ? `${p.alt_ft} ft` : null],
             ["Militar", p.mil ? "sí" : "no"],
-          ], p.mil ? "Aeronave militar captada por la red comunitaria ADS-B." : undefined)],
-        ["alarmas-circle", (p) =>
-          popupHTML(`🚨 Apagón de AIS — ${p.vessel}`, [
+          ], { coord: c, nota: p.mil ? "Aeronave militar captada por la red comunitaria ADS-B." : undefined })],
+        ["alarmas-circle", (p, c) =>
+          infoHTML(`🚨 Apagón de AIS — ${p.vessel}`, [
             ["Bandera", p.flag],
             ["Confianza", p.confianza],
             ["Inicio", fechaLocal(p.inicio)],
             ["Reaparición", p.fin ? fechaLocal(p.fin) : "sin registrar"],
-          ], (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
-             "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos.")],
-        ["ficz-fill", (p) => popupHTML(p.nombre, [], p.detalle)],
-        ["amps-fill", (p) => popupHTML(p.nombre, [], p.detalle)],
+          ], { coord: c, nota: (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
+             "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos." })],
+        // --- puntos estáticos ---
+        ["bases-circle", infoGenerico],
+        ["antartida-bases", infoGenerico],
+        ["antartida-label", infoGenerico],   // islas
+        ["puertos-circle", (p, c) => infoGenerico({ ...p, nombre: `Puerto ${p.nombre}` }, c)],
+        // --- líneas ---
+        ["hidrovia-troncal", infoGenerico],
+        ["hidrovia-curso", infoGenerico],
+        ["zee-line", infoGenerico],
+        // --- rellenos (al final: no deben tapar lo de arriba) ---
+        ["ficz-fill", infoGenerico],
+        ["amps-fill", infoGenerico],
+        ["zee-fill", infoGenerico],
+        ["antartida-fill", infoGenerico],    // sector antártico
       ];
-      for (const [layerId, html] of conPopup) {
-        map.on("click", layerId, (e) => {
-          const f = e.features?.[0];
-          if (!f) return;
-          new Popup({ closeButton: true, maxWidth: "320px" })
-            .setLngLat(e.lngLat)
-            .setHTML(html(f.properties))
-            .addTo(map);
-        });
-        map.on("mouseenter", layerId, () => { map.getCanvas().style.cursor = "pointer"; });
-        map.on("mouseleave", layerId, () => { map.getCanvas().style.cursor = ""; });
-      }
+      // Prioridad: puntos dinámicos → puntos estáticos → líneas → rellenos.
+      // Un solo handler global elige el feature más específico bajo el click,
+      // así un relleno (ZEE) no tapa un punto chico (una base) ni se abren
+      // dos popups a la vez.
+      const rendererMap = new Map(renderers);
+      const ordenPrioridad = renderers.map(([id]) => id);
+      // queryRenderedFeatures lanza si una capa no existe: filtramos a las presentes
+      const capasPresentes = () => ordenPrioridad.filter((id) => map.getLayer(id));
+
+      map.on("click", (e) => {
+        const feats = map.queryRenderedFeatures(e.point, { layers: capasPresentes() });
+        if (!feats.length) return;
+        feats.sort((a, b) => ordenPrioridad.indexOf(a.layer.id) - ordenPrioridad.indexOf(b.layer.id));
+        const f = feats[0];
+        const c: [number, number] = f.geometry?.type === "Point"
+          ? (f.geometry.coordinates as [number, number])
+          : [e.lngLat.lng, e.lngLat.lat];
+        new Popup({ closeButton: true, maxWidth: "340px" })
+          .setLngLat(f.geometry?.type === "Point" ? c : e.lngLat)
+          .setHTML(rendererMap.get(f.layer.id)!(f.properties, c))
+          .addTo(map);
+      });
+      map.on("mousemove", (e) => {
+        const hay = map.queryRenderedFeatures(e.point, { layers: capasPresentes() }).length > 0;
+        map.getCanvas().style.cursor = hay ? "pointer" : "";
+      });
 
       listoRef.current = true;
       aplicarVisibilidad(map, visRef.current, tiempoRef.current?.fecha ?? null);

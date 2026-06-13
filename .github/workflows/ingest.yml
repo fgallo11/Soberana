@@ -90,8 +90,10 @@ jobs:
 
       - name: Commitear datos actualizados
         run: |
-          git config user.name "soberana-ingesta[bot]"
-          git config user.email "ingesta@users.noreply.github.com"
+          # Bot de datos automático del propio proyecto (no es una persona):
+          # regenera las capas y las commitea. Ver docs/operacion.md.
+          git config user.name "Soberana · datos automáticos"
+          git config user.email "datos-automaticos@soberana.noreply"
           git add frontend/public/data/
           if git diff --cached --quiet; then
             echo "Sin cambios en los datos."

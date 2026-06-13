@@ -213,14 +213,25 @@ def generar(out_dir: str | None = None, fuente: str = "auto") -> Path:
         {
             "type": "Feature",
             "geometry": {"type": "LineString", "coordinates": [[round(lo, 5), round(la, 5)] for lo, la in c["coords"]]},
-            "properties": {"nombre": c["nombre"] or "curso de agua", "tipo": "curso"},
+            "properties": {
+                "nombre": c["nombre"] or "curso de agua", "tipo": "curso",
+                "descripcion": f"Curso del {c['nombre']}." if c["nombre"] else "Curso de agua navegable.",
+                "fuente": usada,
+            },
         }
         for c in cursos if len(c["coords"]) >= 2
     ]
     features.append({
         "type": "Feature",
         "geometry": {"type": "LineString", "coordinates": [[round(lo, 5), round(la, 5)] for lo, la in troncal]},
-        "properties": {"nombre": "Hidrovía — traza navegable (Corrientes → Recalada)", "tipo": "troncal"},
+        "properties": {
+            "nombre": "Hidrovía — Vía Navegable Troncal",
+            "tipo": "troncal",
+            "descripcion": "Ruta navegable Corrientes → Recalada (~1.477 km). Por aquí sale cerca del "
+                           "80% de las exportaciones argentinas. Administrada mediante peaje; la "
+                           "soberanía sobre su dragado y control es una discusión estratégica abierta.",
+            "fuente": usada,
+        },
     })
     p = out / "hidrovia.geojson"
     p.write_text(json.dumps({

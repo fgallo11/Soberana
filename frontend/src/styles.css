@@ -165,7 +165,13 @@ body {
 }
 .pp-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 1rem; padding: 0.05rem 0; }
 .pp-row span { color: var(--texto-suave); }
+.pp-desc { font-size: 0.98rem; color: var(--texto); margin: 0.5rem 0 0; line-height: 1.35; }
 .pp-nota { font-size: 0.95rem; color: var(--ambar); margin: 0.45rem 0 0; line-height: 1.3; }
+.pp-coord {
+  font-size: 0.9rem; color: var(--celeste); margin-top: 0.5rem;
+  border-top: 1px dashed var(--borde-suave); padding-top: 0.35rem; user-select: all;
+}
+.pp-fuente { font-size: 0.8rem; color: var(--texto-suave); margin-top: 0.25rem; font-style: italic; }
 
 /* ---------- registro de eventos ---------- */
 .log, .metodologia { max-width: 900px; margin: 0 auto; padding: 1.2rem 1rem 3rem; overflow-y: auto; width: 100%; }

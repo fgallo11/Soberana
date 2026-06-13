@@ -70,14 +70,20 @@ BASES_MILITARES = [
      "Puerto militar extranjero en territorio argentino ocupado (Islas Malvinas)"),
     ("Base Naval Puerto Belgrano", -62.103, -38.894, "Armada Argentina", "Argentina",
      "Principal base naval del país"),
-    ("Base Aeronaval Comandante Espora", -62.169, -38.725, "Armada Argentina", "Argentina", ""),
+    ("Base Aeronaval Comandante Espora", -62.169, -38.725, "Armada Argentina", "Argentina",
+     "Principal base de la aviación naval argentina, junto a Puerto Belgrano."),
     ("Base Naval Mar del Plata", -57.531, -38.034, "Armada Argentina", "Argentina",
-     "Fuerza de submarinos"),
-    ("Base Naval Ushuaia", -68.297, -54.819, "Armada Argentina", "Argentina", ""),
-    ("Base Aeronaval Almirante Quijada (Río Grande)", -67.750, -53.778, "Armada Argentina", "Argentina", ""),
-    ("BAM Río Gallegos", -69.312, -51.609, "Fuerza Aérea Argentina", "Argentina", ""),
-    ("IX Brigada Aérea (Comodoro Rivadavia)", -67.466, -45.785, "Fuerza Aérea Argentina", "Argentina", ""),
-    ("VI Brigada Aérea (Tandil)", -59.250, -37.237, "Fuerza Aérea Argentina", "Argentina", ""),
+     "Apostadero de la fuerza de submarinos. Desde aquí zarpó el ARA San Juan en 2017."),
+    ("Base Naval Ushuaia", -68.297, -54.819, "Armada Argentina", "Argentina",
+     "Base naval más austral del país; apoyo a la proyección antártica y del Atlántico Sur."),
+    ("Base Aeronaval Almirante Quijada (Río Grande)", -67.750, -53.778, "Armada Argentina", "Argentina",
+     "Base aeronaval en Tierra del Fuego, clave en la vigilancia del Atlántico Sur."),
+    ("BAM Río Gallegos", -69.312, -51.609, "Fuerza Aérea Argentina", "Argentina",
+     "Base aérea militar; durante 1982 fue base de operaciones hacia Malvinas."),
+    ("IX Brigada Aérea (Comodoro Rivadavia)", -67.466, -45.785, "Fuerza Aérea Argentina", "Argentina",
+     "Brigada aérea de la Patagonia central."),
+    ("VI Brigada Aérea (Tandil)", -59.250, -37.237, "Fuerza Aérea Argentina", "Argentina",
+     "Asiento de los cazas interceptores de la Fuerza Aérea."),
 ]
 
 # NOTA: los puertos y la traza de la Hidrovía se mudaron a sus propios jobs
@@ -89,11 +95,21 @@ BASES_MILITARES = [
 SECTOR_ANTARTICO = [(-74.0, -60.0), (-25.0, -60.0), (-25.0, -85.0), (-74.0, -85.0), (-74.0, -60.0)]
 
 ISLAS_ATLANTICO_SUR = [
-    ("Islas Malvinas", -59.50, -51.70),
-    ("Islas Georgias del Sur", -36.50, -54.30),
-    ("Islas Sandwich del Sur", -26.50, -57.80),
-    ("Islas Orcadas del Sur", -45.40, -60.60),
-    ("Islas Shetland del Sur", -58.50, -62.10),
+    ("Islas Malvinas", -59.50, -51.70,
+     "Archipiélago argentino bajo ocupación británica desde 1833. ~3.600 habitantes. "
+     "Reclamadas por Argentina; la ONU reconoce la disputa de soberanía pendiente."),
+    ("Islas Georgias del Sur", -36.50, -54.30,
+     "Bajo administración británica, reclamadas por Argentina. Sin población permanente "
+     "salvo la estación de Grytviken. Aguas de altísima riqueza pesquera (kril, austromerluza)."),
+    ("Islas Sandwich del Sur", -26.50, -57.80,
+     "Archipiélago volcánico deshabitado, bajo administración británica y reclamado por "
+     "Argentina. Dentro del área del Tratado Antártico."),
+    ("Islas Orcadas del Sur", -45.40, -60.60,
+     "Dentro del Sector Antártico Argentino. Sede de la Base Orcadas, la base antártica "
+     "permanente más antigua del mundo (1904)."),
+    ("Islas Shetland del Sur", -58.50, -62.10,
+     "Archipiélago antártico con la mayor concentración de bases científicas del mundo "
+     "(argentinas, chilenas, china, rusa, brasileña, etc.)."),
 ]
 
 # Bases antárticas y asentamientos en las islas (conocimiento público,
@@ -146,11 +162,17 @@ def generar(out_dir: str | None = None) -> list[Path]:
 
     zee_fc = _fc(
         [
-            _feature(zee, nombre="ZEE Argentina (aproximada)", aproximado=True),
-            _feature(borde, nombre="Límite milla 200 (aproximado)", tipo="milla_200", aproximado=True),
+            _feature(zee, nombre="ZEE Argentina (aproximada)", aproximado=True,
+                     descripcion="Zona Económica Exclusiva: hasta 200 millas náuticas desde la línea de "
+                                 "base. Argentina tiene derechos soberanos sobre los recursos vivos y "
+                                 "minerales. Es la zona que la flota extranjera explota desde el borde.",
+                     fuente="Geometría aproximada (buffer geodésico); referencia: CONVEMAR / Marine Regions / IGN"),
+            _feature(borde, nombre="Límite de las 200 millas", tipo="milla_200", aproximado=True,
+                     descripcion="El borde exterior de la ZEE. Justo afuera (la 'milla 201') la flota "
+                                 "pesquera extranjera se estaciona para pescar sin licencia argentina.",
+                     fuente="Geometría aproximada"),
         ],
-        descripcion="Zona Económica Exclusiva — geometría APROXIMADA generada por buffer geodésico; "
-                    "reemplazar por Marine Regions/IGN en producción",
+        descripcion="Zona Económica Exclusiva argentina",
         aproximado=True,
     )
     p = out / "zee.geojson"
@@ -162,11 +184,17 @@ def generar(out_dir: str | None = None) -> list[Path]:
     focz = circulo_geodesico(-51.667, -59.5, 200 * NM).difference(ficz).simplify(0.02)
     p = out / "ficz_focz.geojson"
     p.write_text(json.dumps(_fc([
-        _feature(ficz, nombre="FICZ — zona de pesca administrada por el gobierno británico de ocupación",
-                 detalle="Círculo de 150 mn centrado en 51°40'S 59°30'W, dentro de la ZEE argentina",
+        _feature(ficz, nombre="FICZ — Zona de Conservación de las Malvinas",
+                 descripcion="Zona de pesca que la administración británica de las islas declara y "
+                             "licencia a buques extranjeros, dentro de aguas que Argentina reclama como "
+                             "propias. La venta de licencias es la principal fuente de ingresos de la ocupación.",
+                 detalle="Círculo de 150 mn centrado en 51°40'S 59°30'W",
+                 fuente="Definición publicada (FICZ); geometría según radio oficial",
                  aproximado=False),
-        _feature(focz, nombre="FOCZ — zona exterior de conservación (aproximada)",
-                 detalle="Extensión hasta ~200 mn; el límite real sigue líneas medias",
+        _feature(focz, nombre="FOCZ — Zona Exterior de Conservación (aprox.)",
+                 descripcion="Extensión exterior de la zona pesquera administrada desde las islas, "
+                             "hasta unas 200 mn. El límite real sigue líneas medias.",
+                 fuente="Geometría aproximada",
                  aproximado=True),
     ], descripcion="Zonas de licencias pesqueras emitidas por la administración de las Islas Malvinas")))
     escritos.append(p)
@@ -174,12 +202,21 @@ def generar(out_dir: str | None = None) -> list[Path]:
     # --- Áreas marinas protegidas + Agujero Azul (rectángulos aproximados) ---
     amps = [
         _feature(Polygon([(-61.4, -54.7), (-56.6, -54.7), (-56.6, -53.6), (-61.4, -53.6), (-61.4, -54.7)]),
-                 nombre="AMP Namuncurá – Banco Burdwood (aproximada)", tipo="AMP", aproximado=True),
+                 nombre="AMP Namuncurá – Banco Burdwood", tipo="AMP", aproximado=True,
+                 descripcion="Área Marina Protegida sobre una meseta submarina de altísima biodiversidad. "
+                             "Creada por ley para proteger el fondo marino de la pesca de arrastre.",
+                 fuente="Sistema Nacional de Áreas Marinas Protegidas (geometría aproximada)"),
         _feature(Polygon([(-68.5, -57.2), (-65.0, -57.2), (-65.0, -55.2), (-68.5, -55.2), (-68.5, -57.2)]),
-                 nombre="AMP Yaganes (aproximada)", tipo="AMP", aproximado=True),
+                 nombre="AMP Yaganes", tipo="AMP", aproximado=True,
+                 descripcion="Área Marina Protegida al sur de Tierra del Fuego, en la confluencia de los "
+                             "océanos Atlántico y Pacífico. Zona de paso de especies migratorias.",
+                 fuente="Sistema Nacional de Áreas Marinas Protegidas (geometría aproximada)"),
         _feature(Polygon([(-61.5, -47.5), (-58.0, -47.5), (-58.0, -43.5), (-61.5, -43.5), (-61.5, -47.5)]),
-                 nombre="Agujero Azul (aproximado)", tipo="area_interes", aproximado=True,
-                 detalle="Talud continental más allá de la milla 200: zona de concentración de la flota pesquera extranjera"),
+                 nombre="Agujero Azul", tipo="area_interes", aproximado=True,
+                 descripcion="Sector del talud continental más allá de las 200 millas, sobre la "
+                             "plataforma extendida argentina. Es donde se concentra la flota pesquera "
+                             "extranjera (potera y arrastrera) que opera sin control.",
+                 fuente="Zona de interés (geometría aproximada)"),
     ]
     p = out / "amps.geojson"
     p.write_text(json.dumps(_fc(amps, descripcion="Áreas marinas protegidas y zonas de interés — geometrías aproximadas")))
@@ -191,16 +228,22 @@ def generar(out_dir: str | None = None) -> list[Path]:
         [
             _feature(Polygon(SECTOR_ANTARTICO),
                      nombre="Sector Antártico Argentino", tipo="sector",
-                     detalle="Entre los meridianos 25°O y 74°O al sur del paralelo 60°S "
-                             "(recortado en 85°S por la proyección del mapa)"),
+                     descripcion="Porción de la Antártida reclamada por Argentina: entre los meridianos "
+                                 "25°O y 74°O, al sur del paralelo 60°S. El Tratado Antártico (1959) "
+                                 "congela los reclamos pero no los anula. Argentina mantiene presencia "
+                                 "permanente desde 1904.",
+                     detalle="Recortado en 85°S por la proyección del mapa",
+                     fuente="Cartografía oficial argentina"),
             _feature(Point(-49.5, -74.0), nombre="ANTÁRTIDA ARGENTINA", tipo="etiqueta"),
             *[
-                _feature(Point(lon, lat), nombre=n, tipo="isla")
-                for n, lon, lat in ISLAS_ATLANTICO_SUR
+                _feature(Point(lon, lat), nombre=n, tipo="isla", descripcion=desc,
+                         fuente="Cartografía oficial argentina (ubicación aproximada)")
+                for n, lon, lat, desc in ISLAS_ATLANTICO_SUR
             ],
             *[
-                _feature(Point(lon, lat), nombre=n, tipo="base", pais=pais, nota=nota,
-                         argentina=(pais == "Argentina"))
+                _feature(Point(lon, lat), nombre=n, tipo="base", pais=pais,
+                         descripcion=nota, argentina=(pais == "Argentina"),
+                         fuente="Conocimiento público (ubicación aproximada)")
                 for n, lon, lat, pais, nota in BASES_ANTARTICAS
             ],
         ],
@@ -212,8 +255,9 @@ def generar(out_dir: str | None = None) -> list[Path]:
     # --- Bases militares ---
     p = out / "bases_militares.geojson"
     p.write_text(json.dumps(_fc([
-        _feature(Point(lon, lat), nombre=n, fuerza=f, pais=pa, nota=nota,
-                 extranjera=(pa != "Argentina"))
+        _feature(Point(lon, lat), nombre=n, fuerza=f, pais=pa, descripcion=nota,
+                 extranjera=(pa != "Argentina"),
+                 fuente="Conocimiento público (ubicación aproximada)")
         for n, lon, lat, f, pa, nota in BASES_MILITARES
     ], descripcion="Instalaciones militares de conocimiento público (coordenadas aproximadas)"), ensure_ascii=False))
     escritos.append(p)

@@ -49,6 +49,31 @@ PUERTOS_BASE = [
 ]
 
 
+# Contexto por puerto (río + descripción), clave = nombre normalizado.
+# Lo que importa para soberanía: qué se mueve y por qué importa.
+CONTEXTO = {
+    "ROSARIO": ("Río Paraná", "Núcleo del Gran Rosario, el mayor complejo agroexportador del país: "
+                "por aquí sale buena parte de la soja y el maíz argentinos."),
+    "SAN LORENZO/SAN MARTIN": ("Río Paraná", "Mayor polo de terminales graneleras y aceiteras de la Hidrovía."),
+    "TIMBUES": ("Río Paraná", "Terminales agroexportadoras de última generación sobre el Paraná."),
+    "SANTA FE": ("Río Paraná", "Puerto de ultramar más al norte de la Hidrovía troncal."),
+    "BARRANQUERAS": ("Río Paraná", "Puerto del NEA, salida de la producción chaqueña."),
+    "BUENOS AIRES": ("Río de la Plata", "Principal puerto de contenedores del país."),
+    "LA PLATA": ("Río de la Plata", "Puerto con terminal de contenedores y polo petroquímico."),
+    "BAHIA BLANCA": ("Mar Argentino", "Puerto de aguas profundas; granos, combustibles y futuro polo del GNL."),
+    "CONCEPCION DEL URUGUAY": ("Río Uruguay", "Principal puerto argentino sobre el río Uruguay."),
+    "CONCORDIA": ("Río Uruguay", "Puerto del litoral entrerriano sobre el río Uruguay."),
+    "COLON": ("Río Uruguay", "Puerto y paso internacional sobre el río Uruguay."),
+    "GUALEGUAYCHU": ("Río Gualeguaychú", "Puerto sobre el río Gualeguaychú, afluente del Uruguay."),
+    "USHUAIA": ("Canal Beagle", "Puerto más austral del país; base de la proyección antártica y turística."),
+    "PUERTO MADRYN": ("Golfo Nuevo", "Puerto de aguas profundas; aluminio, pesca y carga general."),
+    "COMODORO RIVADAVIA": ("Mar Argentino", "Puerto petrolero de la cuenca del Golfo San Jorge."),
+    "PUERTO DESEADO": ("Mar Argentino", "Puerto pesquero patagónico, base de la flota calamarera."),
+    "MAR DEL PLATA": ("Mar Argentino", "Principal puerto pesquero del país."),
+    "QUEQUEN": ("Mar Argentino", "Puerto granelero de aguas profundas del sudeste bonaerense."),
+}
+
+
 def _normalizar(nombre: str) -> str:
     s = unicodedata.normalize("NFD", nombre)
     return "".join(c for c in s if unicodedata.category(c) != "Mn").upper().strip()
@@ -107,16 +132,25 @@ def generar(out_dir: str | None = None, fuente: str = "auto") -> Path:
         "type": "FeatureCollection",
         "metadata": {"fuente": usada, "descripcion": "Puertos argentinos — fuente única del sistema"},
         "features": [
-            {
-                "type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [round(x["lon"], 5), round(x["lat"], 5)]},
-                "properties": {"nombre": x["nombre"], "tipo": x["tipo"]},
-            }
-            for x in puertos
+            _puerto_feature(x, usada) for x in puertos
         ],
     }, ensure_ascii=False))
     log.info("puertos: %d (%s) → %s", len(puertos), usada, p)
     return p
+
+
+def _puerto_feature(x: dict, fuente: str) -> dict:
+    rio, desc = CONTEXTO.get(_normalizar(x["nombre"]), (None, None))
+    props = {"nombre": x["nombre"], "tipo": x["tipo"], "fuente": x.get("fuente", fuente)}
+    if rio:
+        props["rio"] = rio
+    if desc:
+        props["descripcion"] = desc
+    return {
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [round(x["lon"], 5), round(x["lat"], 5)]},
+        "properties": props,
+    }
 
 
 def cargar_puertos(data_dir: str | None = None) -> list[tuple[str, float, float, str]]:
