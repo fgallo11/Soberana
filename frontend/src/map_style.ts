@@ -19,6 +19,9 @@ export const ESTILO_ESPIA: StyleSpecification = {
     // SIEMPRE, incluso si el servidor de tiles externo está caído
     tierra: { type: "geojson", data: "/data/tierra.geojson" },
     territorio: { type: "geojson", data: "/data/territorio_argentino.geojson" },
+    // territorios argentinos bajo ocupación británica (Malvinas, Georgias y
+    // Sandwich del Sur): se pintan en rojo para que quede claro
+    ocupados: { type: "geojson", data: "/data/territorios_ocupados.geojson" },
   },
   layers: [
     // el fondo es el océano; la tierra se dibuja encima desde datos propios
@@ -40,6 +43,19 @@ export const ESTILO_ESPIA: StyleSpecification = {
       type: "fill",
       source: "territorio",
       paint: { "fill-color": "#245130", "fill-opacity": 0.55 },
+    },
+    // territorios ocupados: silueta ROJA encima del verde
+    {
+      id: "ocupados-fill",
+      type: "fill",
+      source: "ocupados",
+      paint: { "fill-color": "#c0392b", "fill-opacity": 0.85 },
+    },
+    {
+      id: "ocupados-costa",
+      type: "line",
+      source: "ocupados",
+      paint: { "line-color": "#ff5e57", "line-width": 1.1 },
     },
     {
       id: "agua",

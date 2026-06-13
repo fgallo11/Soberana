@@ -54,8 +54,9 @@ def generar(out_dir: str | None = None) -> list[Path]:
         g = shape(f["geometry"])
         if g.intersects(CAJA):
             geoms.append(g.intersection(CAJA))
+    tierra_full = unary_union(geoms)
     # tolerancia fina (~0.005° ≈ 500 m) para conservar las islas chicas
-    tierra = unary_union(geoms).simplify(0.005)
+    tierra = tierra_full.simplify(0.005)
     p = out / "tierra.geojson"
     p.write_text(json.dumps({
         "type": "FeatureCollection",
@@ -66,6 +67,38 @@ def generar(out_dir: str | None = None) -> list[Path]:
         "features": [{"type": "Feature", "geometry": mapping(tierra), "properties": {}}],
     }))
     log.info("tierra: %.0f KB → %s", p.stat().st_size / 1024, p)
+    escritos.append(p)
+
+    # --- territorios argentinos bajo control británico (se pintan en ROJO) ---
+    # Malvinas, Georgias del Sur y Sandwich del Sur: administradas de hecho por
+    # el Reino Unido y reclamadas por Argentina. Se extrae la silueta real de la
+    # tierra (misma fuente que el verde) recortando por la zona de cada
+    # archipiélago, que en mar abierto solo contiene esas islas.
+    OCUPADOS = {
+        "Islas Malvinas": box(-61.5, -53.1, -57.5, -50.8),
+        "Islas Georgias del Sur": box(-38.6, -55.5, -35.0, -53.5),
+        "Islas Sandwich del Sur": box(-28.8, -60.0, -25.5, -56.0),
+    }
+    feats_ocupados = []
+    for nombre, caja in OCUPADOS.items():
+        isla = tierra_full.intersection(caja)
+        if not isla.is_empty:
+            feats_ocupados.append({
+                "type": "Feature",
+                "geometry": mapping(isla.simplify(0.004)),
+                "properties": {"nombre": nombre, "estado": "Territorio argentino bajo ocupación británica"},
+            })
+    p = out / "territorios_ocupados.geojson"
+    p.write_text(json.dumps({
+        "type": "FeatureCollection",
+        "metadata": {
+            "fuente": "Natural Earth 10m (dominio público)",
+            "nota": "Territorios argentinos administrados de hecho por el Reino Unido; "
+                    "se resaltan en rojo. Reclamados por Argentina (disputa de soberanía reconocida por la ONU).",
+        },
+        "features": feats_ocupados,
+    }, ensure_ascii=False))
+    log.info("territorios ocupados: %d → %s", len(feats_ocupados), p)
     escritos.append(p)
 
     # --- territorio argentino (continente + islas del Atlántico Sur) ---

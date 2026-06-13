@@ -525,6 +525,10 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         ["hidrovia-curso", infoGenerico],
         ["zee-line", infoGenerico],
         // --- rellenos (al final: no deben tapar lo de arriba) ---
+        ["ocupados-fill", (p, c) =>
+          infoHTML(`🔴 ${p.nombre}`, [["Estado", p.estado]],
+            { coord: c, nota: "Territorio argentino bajo ocupación británica. Argentina reclama la "
+              + "soberanía; la ONU reconoce la disputa pendiente." })],
         ["ficz-fill", infoGenerico],
         ["amps-fill", infoGenerico],
         ["zee-fill", infoGenerico],
