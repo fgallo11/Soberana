@@ -79,6 +79,11 @@ def generar(out_dir: str | None = None) -> list[Path]:
         "Islas Georgias del Sur": box(-38.6, -55.5, -35.0, -53.5),
         "Islas Sandwich del Sur": box(-28.8, -60.0, -25.5, -56.0),
     }
+    MARCO_ONU = (
+        "La ONU reconoce la disputa de soberanía: Resolución 2065 (1965) —cuestión a resolver por "
+        "negociación bilateral, no de libre determinación—, 3160 (1973) —acelerar negociaciones— y "
+        "31/49 (1976) —no innovar unilateralmente—. El Comité de Descolonización lo reitera cada año."
+    )
     feats_ocupados = []
     for nombre, caja in OCUPADOS.items():
         isla = tierra_full.intersection(caja)
@@ -86,7 +91,11 @@ def generar(out_dir: str | None = None) -> list[Path]:
             feats_ocupados.append({
                 "type": "Feature",
                 "geometry": mapping(isla.simplify(0.004)),
-                "properties": {"nombre": nombre, "estado": "Territorio argentino bajo ocupación británica"},
+                "properties": {
+                    "nombre": nombre,
+                    "estado": "Territorio argentino bajo ocupación británica",
+                    "marco_onu": MARCO_ONU,
+                },
             })
     p = out / "territorios_ocupados.geojson"
     p.write_text(json.dumps({

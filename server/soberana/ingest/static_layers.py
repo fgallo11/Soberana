@@ -65,9 +65,17 @@ COSTA_MALVINAS = [
 BASES_MILITARES = [
     # nombre, lon, lat, fuerza, pais, nota
     ("BFSAI Mount Pleasant (aérea)", -58.447, -51.823, "Royal Air Force", "Reino Unido",
-     "Base militar extranjera en territorio argentino ocupado (Islas Malvinas)"),
+     "Base militar extranjera en territorio argentino ocupado (Malvinas). Núcleo de las Fuerzas "
+     "Británicas del Atlántico Sur (BFSAI): ~1.300 a 1.700 efectivos de Ejército, Royal Navy y RAF, "
+     "más ~40 voluntarios de la Falkland Islands Defence Force. Aire: 4 cazas Eurofighter Typhoon "
+     "FGR4 (Escuadrón Nº 1435) en alerta permanente, 1 avión cisterna Voyager y 1 transporte A400M "
+     "Atlas (Escuadrón Nº 1312). Defensa aérea: misiles Sky Sabre (reemplazaron a los Rapier en 2022). "
+     "Pista inaugurada en 1985. (Datos de fuentes públicas: RAF, Forces News, MercoPress.)"),
     ("Mare Harbour / East Cove (naval)", -58.430, -51.900, "Royal Navy", "Reino Unido",
-     "Puerto militar extranjero en territorio argentino ocupado (Islas Malvinas)"),
+     "Puerto militar extranjero en territorio argentino ocupado (Malvinas). Base naval de la Royal "
+     "Navy en las islas: un buque patrullero guardián permanente (clase River, p. ej. HMS Forth o "
+     "HMS Medway en rotación) más el apoyo de un buque de la Royal Fleet Auxiliary. Sostiene "
+     "logísticamente a la guarnición de Mount Pleasant. (Fuentes públicas: Royal Navy, UK Def. Journal.)"),
     ("Base Naval Puerto Belgrano", -62.103, -38.894, "Armada Argentina", "Argentina",
      "Principal base naval del país"),
     ("Base Aeronaval Comandante Espora", -62.169, -38.725, "Armada Argentina", "Argentina",
@@ -96,14 +104,19 @@ SECTOR_ANTARTICO = [(-74.0, -60.0), (-25.0, -60.0), (-25.0, -85.0), (-74.0, -85.
 
 ISLAS_ATLANTICO_SUR = [
     ("Islas Malvinas", -58.90, -51.80,
-     "Archipiélago argentino bajo ocupación británica desde 1833. ~3.600 habitantes. "
-     "Reclamadas por Argentina; la ONU reconoce la disputa de soberanía pendiente."),
+     "Archipiélago argentino bajo ocupación británica desde 1833 (~3.600 habitantes). "
+     "La ONU reconoce la disputa de soberanía: la Resolución 2065 (1965) la definió como "
+     "una cuestión a resolver por negociación bilateral entre Argentina y el Reino Unido —no "
+     "un caso de libre determinación—; la Resolución 3160 (1973) instó a acelerar las "
+     "negociaciones; y la 31/49 (1976) pidió a las partes no introducir modificaciones "
+     "unilaterales mientras la disputa siga pendiente. El Comité de Descolonización lo reitera cada año."),
     ("Islas Georgias del Sur", -36.50, -54.30,
-     "Bajo administración británica, reclamadas por Argentina. Sin población permanente "
-     "salvo la estación de Grytviken. Aguas de altísima riqueza pesquera (kril, austromerluza)."),
+     "Bajo administración británica y reclamadas por Argentina; comprendidas en la disputa de "
+     "soberanía reconocida por la ONU (Res. 2065 y subsiguientes). Sin población permanente salvo "
+     "la estación de Grytviken. Aguas de altísima riqueza pesquera (kril, austromerluza)."),
     ("Islas Sandwich del Sur", -26.50, -57.80,
-     "Archipiélago volcánico deshabitado, bajo administración británica y reclamado por "
-     "Argentina. Dentro del área del Tratado Antártico."),
+     "Archipiélago volcánico deshabitado, bajo administración británica y reclamado por Argentina; "
+     "incluido en la disputa de soberanía reconocida por la ONU (Res. 2065 y subsiguientes)."),
     ("Islas Orcadas del Sur", -45.40, -60.60,
      "Dentro del Sector Antártico Argentino. Sede de la Base Orcadas, la base antártica "
      "permanente más antigua del mundo (1904)."),

@@ -527,8 +527,8 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         // --- rellenos (al final: no deben tapar lo de arriba) ---
         ["ocupados-fill", (p, c) =>
           infoHTML(`🔴 ${p.nombre}`, [["Estado", p.estado]],
-            { coord: c, nota: "Territorio argentino bajo ocupación británica. Argentina reclama la "
-              + "soberanía; la ONU reconoce la disputa pendiente." })],
+            { coord: c, descripcion: "Territorio argentino bajo ocupación británica.",
+              nota: p.marco_onu || "Argentina reclama la soberanía; la ONU reconoce la disputa pendiente." })],
         ["ficz-fill", infoGenerico],
         ["amps-fill", infoGenerico],
         ["zee-fill", infoGenerico],
