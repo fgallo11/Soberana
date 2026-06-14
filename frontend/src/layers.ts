@@ -86,7 +86,7 @@ export const CAPAS: CapaDef[] = [
     grupo: "Mar y milla 201",
     titulo: "📷 Radar satelital (SAR) — foto",
     descripcion:
-      "FOTO por pasada del satélite, no película: buques detectados por Sentinel-1 transmitan o no AIS. Rojo: sin correlación con AIS (buque 'dark'). Elegí el día en la barra de tiempo. Fuente: Global Fishing Watch.",
+      "FOTO por pasada del satélite, no película: buques detectados por Sentinel-1 transmitan o no AIS. Rojo: SIN correlación con AIS (buque 'dark'); gris: con AIS; azul: sin clasificar. Elegí el día en la barra de tiempo. Fuente: Global Fishing Watch.",
     badge: "~5 días",
     mapLayers: ["sar-circle"],
     defaultOn: true,

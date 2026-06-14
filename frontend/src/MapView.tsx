@@ -383,7 +383,12 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
           id: "sar-circle", type: "circle", source: "sar",
           paint: {
             "circle-radius": 4,
-            "circle-color": ["case", ["coalesce", ["get", "matched"], false], "#9aa7b3", "#ff3b30"],
+            "circle-color": [
+              "case",
+              ["==", ["get", "matched"], true], "#9aa7b3",
+              ["==", ["get", "matched"], false], "#ff3b30",
+              "#5b8aa6",
+            ],
             "circle-opacity": 0.85,
           },
         });
@@ -550,12 +555,18 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
       // líneas, y al final los rellenos grandes (que si no taparían todo).
       const renderers: Array<[string, (p: any, c: [number, number]) => Info]> = [
         // --- puntos dinámicos ---
-        ["sar-circle", (p, c) =>
-          mkInfo(
-            p.matched ? "Detección SAR (correlacionada con AIS)" : "Detección SAR no correlacionada con AIS",
-            [["Fecha", p.fecha], ["Fuente", p.fuente ?? "GFW / Sentinel-1"]],
-            { coord: c, alerta: !p.matched, nota: p.matched ? undefined :
-              "Un buque presente que no transmitía AIS. NO implica por sí solo actividad ilegal." })],
+        ["sar-circle", (p, c) => {
+          const titulo = p.matched === true ? "Detección SAR correlacionada con AIS"
+            : p.matched === false ? "Detección SAR SIN correlación con AIS (buque dark)"
+            : "Detección SAR (sin clasificar)";
+          const nota = p.matched === false
+            ? "Un buque detectado por radar que NO transmitía AIS. NO implica por sí solo actividad ilegal."
+            : p.matched == null
+            ? "GFW no devolvió la correlación con AIS en esta corrida; detección sin clasificar."
+            : "Detección de radar que coincide con un buque que sí transmitía AIS.";
+          return mkInfo(titulo, [["Fecha", p.fecha], ["Fuente", p.fuente ?? "GFW / Sentinel-1"]],
+            { coord: c, alerta: p.matched === false, nota });
+        }],
         ["viirs-circle", (p, c) => mkInfo("Luz de barco (VIIRS)", [["Fecha", p.fecha]],
           { coord: c, nota: "Detección nocturna por luz. Típicamente flota potera. No identifica al buque." })],
         ["ais-circle", (p, c) =>

@@ -133,48 +133,71 @@ def _guardar_eventos(eng, tipo: str, entries: list[dict]) -> int:
     return n
 
 
+def _sar_report(client, desde, hasta, filtro: str | None = None) -> list[dict]:
+    """Una consulta al report de SAR (celdas agregadas). `filtro` opcional, p.ej.
+    "matched = false" para detecciones SIN correlación AIS (buques dark)."""
+    params = {
+        "datasets[0]": "public-global-sar-presence:latest",
+        "temporal-resolution": "DAILY",
+        "spatial-resolution": "HIGH",
+        "format": "JSON",
+        "date-range": f"{desde},{hasta}",
+    }
+    if filtro:
+        params["filters[0]"] = filtro
+    resp = client.post("/4wings/report", params=params, json={"geojson": _region_geojson()})
+    resp.raise_for_status()
+    rows = []
+    for entry in resp.json().get("entries", []):
+        for _, celdas in entry.items():
+            for row in celdas or []:
+                if row.get("lat") is not None:
+                    rows.append(row)
+    return rows
+
+
 def ingerir_sar(dias: int = 30) -> Path:
-    """Detecciones SAR (Sentinel-1) vía 4Wings report → GeoJSON para el frontend.
-
-    Cada feature trae `matched` (correlacionada con AIS) — las no matcheadas
-    son los buques *dark*. La capa se rotula 'detección no correlacionada
-    con AIS', nunca 'buque ilegal'.
-
-    Resolución temporal DIARIA: cada detección lleva su fecha, que es lo
-    que permite la barra de tiempo del frontend (ventana de 30 días).
+    """Detecciones SAR (Sentinel-1) → GeoJSON, separando las correlacionadas con
+    AIS (matched) de las NO correlacionadas (dark). La correlación la calcula
+    GFW contra AIS satelital. Si el filtro de GFW no estuviera disponible, se
+    publican las detecciones SIN afirmar correlación (matched=null), para no
+    etiquetar de forma engañosa.
     """
     hasta = utcnow().date()
     desde = hasta - timedelta(days=dias)
     with _client() as client:
-        resp = client.post(
-            "/4wings/report",
-            params={
-                "datasets[0]": "public-global-sar-presence:latest",
-                "temporal-resolution": "DAILY",
-                "spatial-resolution": "HIGH",
-                "format": "JSON",
-                "date-range": f"{desde},{hasta}",
-            },
-            json={"geojson": _region_geojson()},
-        )
-        resp.raise_for_status()
-        data = resp.json()
+        total = _sar_report(client, desde, hasta)
+        try:
+            dark = _sar_report(client, desde, hasta, "matched = false")
+            matched = _sar_report(client, desde, hasta, "matched = true")
+        except httpx.HTTPStatusError as exc:
+            log.warning("filtro matched de SAR no aceptado (%s); publico sin correlación", exc)
+            dark = matched = None
 
-    features = []
-    for entry in data.get("entries", []):
-        for _, rows in entry.items():
-            for row in rows or []:
-                if row.get("lat") is None:
-                    continue
-                features.append({
-                    "type": "Feature",
-                    "geometry": {"type": "Point", "coordinates": [row["lon"], row["lat"]]},
-                    "properties": {
-                        "detecciones": row.get("detections") or row.get("value"),
-                        "fecha": row.get("date"),
-                        "fuente": "GFW / Sentinel-1",
-                    },
-                })
+    def _feat(row, matched_val):
+        return {
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [row["lon"], row["lat"]]},
+            "properties": {
+                "matched": matched_val,
+                "detecciones": row.get("detections") or row.get("value"),
+                "fecha": row.get("date"),
+                "fuente": "GFW / Sentinel-1",
+            },
+        }
+
+    # ¿el filtro realmente segmentó, o devolvió todo en ambos casos?
+    filtro_ok = (
+        dark is not None and matched is not None
+        and not (len(dark) == len(matched) == len(total) and len(total) > 0)
+    )
+    if filtro_ok:
+        features = [_feat(r, False) for r in dark] + [_feat(r, True) for r in matched]
+        nota = None
+    else:
+        features = [_feat(r, None) for r in total]
+        nota = "Correlación con AIS no disponible en esta corrida: se muestran las detecciones sin clasificar."
+
     out = Path(settings.data_dir) / "sar_detections.geojson"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
@@ -185,10 +208,13 @@ def ingerir_sar(dias: int = 30) -> Path:
             "generado": utcnow().isoformat(),
             "ventana_dias": dias,
             "demo": False,
+            "nota": nota,
         },
         "features": features,
     }, ensure_ascii=False))
-    log.info("SAR: %d detecciones → %s", len(features), out)
+    log.info("SAR: %d detecciones (dark=%s matched=%s, filtro_ok=%s) → %s",
+             len(features), None if dark is None else len(dark),
+             None if matched is None else len(matched), filtro_ok, out)
     return out
 
 
