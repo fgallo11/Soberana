@@ -36,6 +36,12 @@ jobs:
           SOBERANA_DATA_DIR: ../frontend/public/data
         run: python -m soberana.ingest.static_layers
 
+      - name: Infraestructura crítica (relevo curado, sin token)
+        working-directory: server
+        env:
+          SOBERANA_DATA_DIR: ../frontend/public/data
+        run: python -m soberana.ingest.infraestructura
+
       - name: Hidrovía — curso real del río (OSM/Natural Earth, sin token)
         working-directory: server
         env:

@@ -24,6 +24,16 @@ export const CAPAS: CapaDef[] = [
     defaultOn: true,
   },
   {
+    id: "infra",
+    grupo: "Soberanía",
+    titulo: "Infraestructura crítica (control extranjero)",
+    descripcion:
+      "Litio (amarillo), represas (celeste), cables submarinos (violeta) y terminales portuarias (naranja) cuyo control, operación o financiamiento es extranjero. Tocá cada punto para el detalle.",
+    badge: "estático",
+    mapLayers: ["infra-circle", "infra-label"],
+    defaultOn: true,
+  },
+  {
     id: "antartida",
     grupo: "Soberanía",
     titulo: "Antártida Argentina e islas",

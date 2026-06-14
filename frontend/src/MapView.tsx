@@ -283,6 +283,32 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
         paint: { "text-color": "#dfe6e9", "text-halo-color": "#000000", "text-halo-width": 1 },
       });
 
+      // ---------- infraestructura crítica con presencia extranjera ----------
+      map.addSource("infra", { type: "geojson", data: "/data/infraestructura_critica.geojson" });
+      map.addLayer({
+        id: "infra-circle", type: "circle", source: "infra",
+        paint: {
+          "circle-radius": 6,
+          "circle-color": [
+            "match", ["get", "categoria"],
+            "litio", "#ffd166",
+            "represa", "#00b8d4",
+            "cable", "#a29bfe",
+            "puerto", "#ff9f1a",
+            "#ff5e57",
+          ],
+          "circle-stroke-color": "#000", "circle-stroke-width": 1.5,
+        },
+      });
+      map.addLayer({
+        id: "infra-label", type: "symbol", source: "infra", minzoom: 4,
+        layout: {
+          "text-field": ["get", "nombre"], "text-font": FUENTE_TEXTO,
+          "text-size": 9.5, "text-offset": [0, 1.1], "text-anchor": "top",
+        },
+        paint: { "text-color": "#dfe6e9", "text-halo-color": "#000", "text-halo-width": 1 },
+      });
+
       map.addSource("hidrovia", { type: "geojson", data: "/data/hidrovia.geojson" });
       map.addLayer({
         id: "hidrovia-curso", type: "line", source: "hidrovia",
@@ -513,6 +539,7 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
           ], { coord: c, alerta: true, nota: (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
              "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos." })],
         // --- puntos estáticos ---
+        ["infra-circle", infoGenerico],
         ["bases-circle", infoGenerico],
         ["antartida-bases", infoGenerico],
         ["antartida-label", infoGenerico],   // islas
