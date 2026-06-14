@@ -82,8 +82,16 @@ BASES_MILITARES = [
      "Principal base de la aviación naval argentina, junto a Puerto Belgrano."),
     ("Base Naval Mar del Plata", -57.531, -38.034, "Armada Argentina", "Argentina",
      "Apostadero de la fuerza de submarinos. Desde aquí zarpó el ARA San Juan en 2017."),
-    ("Base Naval Ushuaia", -68.297, -54.819, "Armada Argentina", "Argentina",
-     "Base naval más austral del país; apoyo a la proyección antártica y del Atlántico Sur."),
+    ("Base Naval Ushuaia / Polo Logístico Antártico", -68.297, -54.819, "Armada Argentina", "Argentina",
+     "Base naval más austral del país y futura Base Naval Integrada / Polo Logístico Antártico (el "
+     "puerto operativo más cercano a la Antártida). Proyecto de la Armada Argentina con fuerte "
+     "interés estratégico de Estados Unidos: en 2024 fue visitada por la entonces jefa del Comando "
+     "Sur de EE.UU. No es una base estadounidense; la soberanía y operación son argentinas."),
+    ("Estación Espacio Lejano (China)", -70.1495, -38.1914, "CLTC — vinculada al Ejército Popular de Liberación", "China",
+     "Estación de espacio profundo china en Bajada del Agrio (Neuquén): antena de 35 m, 200 hectáreas "
+     "cedidas por ~50 años, operativa desde 2017. La opera la CLTC (control de satélites del EPL/PLA), "
+     "con escaso control argentino y preocupaciones por su posible uso dual (militar). Único enclave de "
+     "una potencia extranjera en el territorio continental argentino."),
     ("Base Aeronaval Almirante Quijada (Río Grande)", -67.750, -53.778, "Armada Argentina", "Argentina",
      "Base aeronaval en Tierra del Fuego, clave en la vigilancia del Atlántico Sur."),
     ("BAM Río Gallegos", -69.312, -51.609, "Fuerza Aérea Argentina", "Argentina",
