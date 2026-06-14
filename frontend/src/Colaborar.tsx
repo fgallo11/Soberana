@@ -73,8 +73,10 @@ export default function Colaborar() {
           </li>
           <li>
             <b>Con pedidos de acceso a la información</b> (ley 27.275): hay datos del Estado que existen y no
-            se publican (traza balizada de la VNT, datos de Prefectura). Los pedidos formales son una forma de
-            colaboración concreta.
+            se publican. Caso concreto y pendiente: el <b>detalle por departamento de la extranjerización de
+            tierras</b> (~530 distritos) no está como descarga abierta — el Observatorio de Tierras lo obtuvo
+            pidiéndolo al Registro Nacional de Tierras Rurales por esta ley. Con ese dataset armamos el mapa
+            completo por distrito. También: la traza balizada de la Hidrovía y datos de Prefectura.
           </li>
         </ul>
       </section>

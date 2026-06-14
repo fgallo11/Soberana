@@ -47,14 +47,26 @@ PORCENTAJES = {
     "CORDOBA": 1.12,
 }
 
-# Departamentos "punto caliente" (superan ampliamente el ex tope del 15%).
-# (nombre, lon, lat, pct, provincia)
+# Departamentos "punto caliente" (superan o rozan el ex tope del 15%).
+# Datos de informes del RNTR difundidos por el Observatorio de Tierras
+# (IESYH-CONICET/UBA) y prensa. (nombre, lon, lat, pct, provincia)
 DEPARTAMENTOS = [
     ("San Carlos", -66.08, -25.90, 59.8, "Salta"),
     ("Molinos", -66.28, -25.43, 57.7, "Salta"),
+    ("General Lamadrid", -68.22, -28.95, 57.0, "La Rioja"),
     ("Lácar", -71.35, -40.16, 54.0, "Neuquén"),
+    ("Campana", -59.00, -34.10, 50.7, "Buenos Aires"),
     ("Cushamen", -70.55, -42.18, 22.9, "Chubut"),
+    ("Malargüe", -69.58, -35.48, 15.0, "Mendoza"),
 ]
+
+# Contexto nacional (RNTR / informe IESYH-CONICET-UBA)
+CONTEXTO_NACIONAL = (
+    "A nivel país hay ~13,4 millones de hectáreas en manos extranjeras (~5% del territorio, una "
+    "superficie similar a Inglaterra). Por nacionalidad lidera Estados Unidos con ~2,7 M ha "
+    "(más que toda la provincia de Tucumán), seguido por Italia y España; esas tres concentran la "
+    "mitad de la tierra extranjerizada. Los focos coinciden con zonas de frontera, agua, minería y puertos."
+)
 
 
 def _norm(s: str) -> str:
@@ -106,9 +118,10 @@ def generar(out_dir: str | None = None) -> Path:
                 "tipo": "departamento",
                 "pct": pct,
                 "descripcion": (
-                    f"{pct}% de las tierras del departamento en manos extranjeras — muy por encima del "
-                    "tope del 15% que fijaba la ley 26.737 (derogada en 2023). Uno de los focos de "
-                    "extranjerización más altos del país."
+                    f"{pct}% de las tierras del departamento en manos extranjeras — "
+                    + ("muy por encima del" if pct > 15 else "al límite del")
+                    + " tope del 15% que fijaba la ley 26.737 (derogada en 2023). Uno de los focos de "
+                    "extranjerización del país, en zona de recursos estratégicos. " + CONTEXTO_NACIONAL
                 ),
                 "fuente": "Registro Nacional de Tierras Rurales (dato oficial argentino)",
             },
@@ -118,10 +131,13 @@ def generar(out_dir: str | None = None) -> Path:
     p.write_text(json.dumps({
         "type": "FeatureCollection",
         "metadata": {
-            "descripcion": "Extranjerización de tierras rurales por provincia (RNTR). "
-                           "~5-6% nacional (~13 M ha). Ley 26.737 derogada por DNU 70/2023.",
-            "fuente": "Registro Nacional de Tierras Rurales — argentina.gob.ar/justicia/tierrasrurales",
+            "descripcion": "Extranjerización de tierras rurales (RNTR). " + CONTEXTO_NACIONAL,
+            "fuente": "Registro Nacional de Tierras Rurales — argentina.gob.ar/justicia/tierrasrurales; "
+                      "informes del Observatorio de Tierras (IESYH-CONICET/UBA) obtenidos por Ley 27.275",
             "parcial": True,
+            "nota_datos": "El detalle por departamento (~530 distritos) no está publicado como descarga "
+                          "abierta: se obtiene pidiéndolo al RNTR por la Ley 27.275 de acceso a la "
+                          "información pública. Con ese dataset se puede armar el choropleth completo por distrito.",
         },
         "features": features,
     }, ensure_ascii=False))
