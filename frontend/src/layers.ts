@@ -38,7 +38,7 @@ export const CAPAS: CapaDef[] = [
     grupo: "Soberanía",
     titulo: "Infraestructura crítica (control extranjero)",
     descripcion:
-      "Litio (amarillo), represas (celeste), cables submarinos (violeta) y terminales portuarias (naranja) cuyo control, operación o financiamiento es extranjero. Tocá cada punto para el detalle.",
+      "Litio (amarillo), minería de oro/cobre (bronce), represas (celeste), cables submarinos (violeta) y terminales portuarias (naranja) cuyo control, operación o financiamiento es extranjero. Tocá cada punto para el detalle.",
     badge: "estático",
     mapLayers: ["infra-circle", "infra-label"],
     defaultOn: true,

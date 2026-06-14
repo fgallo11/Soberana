@@ -328,6 +328,7 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
           "circle-color": [
             "match", ["get", "categoria"],
             "litio", "#ffd166",
+            "mineria", "#cd853f",
             "represa", "#00b8d4",
             "cable", "#a29bfe",
             "puerto", "#ff9f1a",
@@ -354,7 +355,9 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
       map.addLayer({
         id: "hidrovia-troncal", type: "line", source: "hidrovia",
         filter: ["==", ["get", "tipo"], "troncal"],
-        paint: { "line-color": "#00b894", "line-width": 2.2 },
+        // punteada y semitransparente: es la traza navegable orientativa, no
+        // un calco exacto del cauce (la ruta fina vendrá del AIS y de OSM)
+        paint: { "line-color": "#00d6a0", "line-width": 2, "line-opacity": 0.7, "line-dasharray": [3, 2] },
       });
 
       map.addSource("puertos", { type: "geojson", data: "/data/puertos.geojson" });

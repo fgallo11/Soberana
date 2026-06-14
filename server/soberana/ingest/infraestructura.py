@@ -52,6 +52,21 @@ INFRAESTRUCTURA = [
     ("Mariana — Salar de Llullaillaco", -68.22, -25.00, "litio", "Litio", "China",
      "Proyecto de litio de la china Ganfeng Lithium (inversión ~US$580 M). Salta, depto. Los Andes.",
      "Prensa argentina"),
+    # ----------------- MINERÍA (oro/cobre, operadores extranjeros) -----------------
+    ("Veladero", -69.92, -29.33, "mineria", "Mina de oro", "Canadá / China",
+     "Una de las mayores minas de oro del país (Iglesia, San Juan, en plena cordillera). Operada en "
+     "sociedad 50/50 por la canadiense Barrick Gold y la estatal china Shandong Gold (que compró el "
+     "50% en 2017). En zona de glaciares y nacientes de agua.",
+     "Prensa argentina / Letra P"),
+    ("MARA — Bajo de la Alumbrera / Agua Rica", -66.62, -27.33, "mineria", "Mina de cobre y oro", "Suiza / EE.UU.",
+     "Proyecto cuprífero MARA (Andalgalá, Catamarca). Controlado por capitales extranjeros: Glencore "
+     "(Suiza, 25%) y Newmont (EE.UU.), entre otros. Históricamente uno de los mayores yacimientos de "
+     "cobre y oro del país.",
+     "Prensa argentina / EconoJournal"),
+    ("Josemaría / Filo del Sol (Vicuña)", -69.78, -28.95, "mineria", "Cobre/oro/plata", "Canadá / Australia",
+     "Distrito cuprífero gigante en San Juan (frontera con Chile), entre las mayores reservas de cobre "
+     "del mundo. Desarrollado por Vicuña Corp: la canadiense Lundin Mining y la angloaustraliana BHP.",
+     "Prensa argentina / EconoJournal"),
     # ----------------- REPRESAS (financiamiento/construcción china) -----------------
     ("Represa Néstor Kirchner (Cóndor Cliff)", -70.86, -50.16, "represa", "Represa hidroeléctrica", "China (financia/construye)",
      "Mayor obra hidroeléctrica en construcción del país, sobre el río Santa Cruz. La construye una UTE "

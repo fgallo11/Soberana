@@ -227,9 +227,12 @@ def generar(out_dir: str | None = None, fuente: str = "auto") -> Path:
         "properties": {
             "nombre": "Hidrovía — Vía Navegable Troncal",
             "tipo": "troncal",
-            "descripcion": "Ruta navegable Corrientes → Recalada (~1.477 km). Por aquí sale cerca del "
-                           "80% de las exportaciones argentinas. Administrada mediante peaje; la "
-                           "soberanía sobre su dragado y control es una discusión estratégica abierta.",
+            "descripcion": "Traza navegable ORIENTATIVA de la Hidrovía (Corrientes → Recalada, ~1.477 km), "
+                           "por donde sale cerca del 80% de las exportaciones argentinas. Es una referencia "
+                           "del recorrido, no un calco exacto del canal dragado: la ruta precisa que toman "
+                           "los buques se reconstruirá a partir del tráfico AIS real cuando el sistema "
+                           "acumule datos. Administrada mediante peaje; su dragado y control son una "
+                           "discusión estratégica abierta.",
             "fuente": usada,
         },
     })

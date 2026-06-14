@@ -111,8 +111,8 @@ def generar(out_dir: str | None = None) -> list[Path]:
     escritos.append(p)
 
     # --- territorio argentino (continente + islas del Atlántico Sur) ---
-    # 50m: la resolución 110m no incluye Georgias ni Sandwich del Sur
-    paises = _bajar("ne_50m_admin_0_countries")
+    # 10m: alta resolución, coincide con la costa de la capa de tierra
+    paises = _bajar("ne_10m_admin_0_countries")
     partes = []
     for f in paises["features"]:
         props = f.get("properties", {})
@@ -121,12 +121,12 @@ def generar(out_dir: str | None = None) -> list[Path]:
             partes.append(shape(f["geometry"]))
     if not partes:
         raise SystemExit("Natural Earth cambió su esquema de propiedades: revisar ISOs")
-    territorio = unary_union(partes).simplify(0.02)
+    territorio = unary_union(partes).simplify(0.008)
     p = out / "territorio_argentino.geojson"
     p.write_text(json.dumps({
         "type": "FeatureCollection",
         "metadata": {
-            "fuente": "Natural Earth 110m (dominio público)",
+            "fuente": "Natural Earth 10m (dominio público)",
             "nota": "continente + Malvinas + Georgias y Sandwich del Sur, conforme a la "
                     "cartografía oficial argentina; el Sector Antártico tiene capa propia",
         },
