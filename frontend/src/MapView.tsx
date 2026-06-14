@@ -1,7 +1,7 @@
 import maplibregl, { GeoJSONSource, Map as MLMap } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 import { API_URL, HAY_BACKEND, LIMITES, VISTA_INICIAL_BOUNDS, ZOOM_MAX, ZOOM_MIN } from "./config";
-import { CAPAS } from "./layers";
+import { CAPAS, idsProximamente } from "./layers";
 import { ESTILO_ESPIA } from "./map_style";
 
 const FUENTE_TEXTO = ["Noto Sans Regular"];
@@ -14,7 +14,6 @@ interface Props {
   onSelect: (info: Info | null) => void;
   /** null = en vivo; {fecha, minuto} = modo archivo (barra de tiempo) */
   tiempo: Tiempo | null;
-  onDemo: () => void;
 }
 
 /** Recorridos de un día: mmsi -> {name, flag, pts: [[minuto, lon, lat], ...]} */
@@ -154,7 +153,8 @@ function infoGenerico(p: any, coord: [number, number]): Info {
   });
 }
 
-export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
+export default function MapView({ visibles, tiempo, onSelect }: Props) {
+  const prox = idsProximamente();
   const contRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const visRef = useRef(visibles);
@@ -377,7 +377,6 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
       // ---------- capas satelitales (archivos regenerados por jobs) ----------
       const sar: any = await fetch("/data/sar_detections.geojson").then((r) => r.json()).catch(() => null);
       if (sar) {
-        if (sar.metadata?.demo) onDemo();
         map.addSource("sar", { type: "geojson", data: sar });
         map.addLayer({
           id: "sar-circle", type: "circle", source: "sar",
@@ -394,9 +393,10 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
         });
       }
 
-      const viirs: any = await fetch("/data/viirs_boats.geojson").then((r) => r.json()).catch(() => null);
-      if (viirs) {
-        if (viirs.metadata?.demo) onDemo();
+      // VIIRS: "próximamente" hasta tener credenciales EOG (no cargamos el demo)
+      const viirs: any = prox.has("viirs") ? null
+        : await fetch("/data/viirs_boats.geojson").then((r) => r.json()).catch(() => null);
+      if (viirs && !viirs.metadata?.demo) {
         map.addSource("viirs", { type: "geojson", data: viirs });
         map.addLayer({
           id: "viirs-circle", type: "circle", source: "viirs",
@@ -404,7 +404,8 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
         });
       }
 
-      const alturas: any = await fetch("/data/alturas.json").then((r) => r.json()).catch(() => null);
+      const alturas: any = prox.has("alturas") ? null
+        : await fetch("/data/alturas.json").then((r) => r.json()).catch(() => null);
       if (alturas?.alturas?.length) {
         map.addSource("alturas", {
           type: "geojson",
@@ -442,7 +443,6 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
       try {
         const ev = await fetch(HAY_BACKEND ? `${API_URL}/api/events?limit=500` : "/data/events.json")
           .then((r) => r.json());
-        if (ev.demo || (ev.events ?? []).some((e: any) => e.demo)) onDemo();
         map.addSource("alarmas", {
           type: "geojson",
           data: {
@@ -540,14 +540,17 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
         },
         paint: { "text-color": "#ff9f1a", "text-halo-color": "#000", "text-halo-width": 1 },
       });
-      const cargarAeronaves = async () => {
-        try {
-          const data = await fetchAeronaves();
-          (map.getSource("adsb") as GeoJSONSource | undefined)?.setData(data);
-        } catch { /* fuente comunitaria caída: capa vacía */ }
-      };
-      cargarAeronaves();
-      timers.push(window.setInterval(cargarAeronaves, 30_000));
+      // aéreo "próximamente": no consultamos adsb.lol por ahora (capa vacía/deshabilitada)
+      if (!prox.has("aereo")) {
+        const cargarAeronaves = async () => {
+          try {
+            const data = await fetchAeronaves();
+            (map.getSource("adsb") as GeoJSONSource | undefined)?.setData(data);
+          } catch { /* fuente comunitaria caída: capa vacía */ }
+        };
+        cargarAeronaves();
+        timers.push(window.setInterval(cargarAeronaves, 30_000));
+      }
 
       // ---------- fichas de info ----------
       // c = [lng, lat] del punto a mostrar (geometría del feature si es Point, si no el click)
@@ -676,7 +679,6 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
           if (!replayDemoRef.current) {
             const r = await fetch("/data/replay_demo.json").then((x) => x.json());
             replayDemoRef.current = r.dias ?? {};
-            if (r.demo) onDemo();
           }
           buques = replayDemoRef.current?.[fecha] ?? {};
         }
@@ -689,7 +691,7 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
       }
     })();
     return () => { cancelado = true; };
-  }, [fecha, onDemo]);
+  }, [fecha]);
 
   // cambio de minuto: nuevo fotograma de la película (interpolación fluida)
   useEffect(() => {

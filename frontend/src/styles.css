@@ -148,6 +148,12 @@ body {
 .b-envivo { color: var(--fosforo); border-color: var(--borde); }
 .b-72h, .b-5das { color: var(--ambar); border-color: #6b5310; }
 .b-24h, .b-horas { color: var(--celeste); border-color: #2b4a66; }
+.b-proximamente { color: var(--ambar); border-color: #6b5310; background: #221700; }
+
+/* reproductor en modo "próximamente": visible pero inerte */
+.timebar-prox { opacity: 0.72; }
+.timebar-prox button, .timebar-prox input { cursor: not-allowed; }
+.tb-modo.prox { color: var(--ambar); }
 
 .atribucion { font-size: 0.9rem; color: var(--texto-suave); margin-top: 1.2rem; line-height: 1.35; border-top: 1px dashed var(--borde-suave); padding-top: 0.6rem; }
 

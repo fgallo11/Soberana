@@ -11,7 +11,12 @@ export interface CapaDef {
   defaultOn: boolean;
   /** requiere backend desplegado (API_URL) */
   requiereBackend?: boolean;
+  /** sin datos reales todavía: se muestra deshabilitada con cartel "PRÓXIMAMENTE" */
+  proximamente?: boolean;
 }
+
+/** ids de capas marcadas "próximamente" (para que MapView no cargue su data). */
+export const idsProximamente = () => new Set(CAPAS.filter((c) => c.proximamente).map((c) => c.id));
 
 export const CAPAS: CapaDef[] = [
   {
@@ -99,7 +104,8 @@ export const CAPAS: CapaDef[] = [
       "UNA FOTO POR NOCHE, no película: las luces de la flota potera vistas por satélite, aunque apague el AIS. Elegí la noche en la barra de tiempo. Fuente: EOG/NOAA.",
     badge: "~24 h",
     mapLayers: ["viirs-circle"],
-    defaultOn: true,
+    defaultOn: false,
+    proximamente: true,
   },
   {
     id: "alarmas",
@@ -120,6 +126,7 @@ export const CAPAS: CapaDef[] = [
     mapLayers: ["gfw-pesca"],
     defaultOn: false,
     requiereBackend: true,
+    proximamente: true,
   },
   {
     id: "ais",
@@ -129,7 +136,8 @@ export const CAPAS: CapaDef[] = [
       "En vivo: posiciones AIS de la Hidrovía y el litoral (requiere backend). En archivo: película del día — recorridos reconstruidos e interpolados. El AIS terrestre NO llega a la milla 201: lo que pasa allá se ve en las fotos satelitales.",
     badge: "en vivo",
     mapLayers: ["ais-circle", "ais-label"],
-    defaultOn: true,
+    defaultOn: false,
+    proximamente: true,
   },
   {
     id: "hidrovia",
@@ -149,6 +157,7 @@ export const CAPAS: CapaDef[] = [
     badge: "horas",
     mapLayers: ["alturas-label"],
     defaultOn: false,
+    proximamente: true,
   },
   {
     id: "aereo",
@@ -158,6 +167,7 @@ export const CAPAS: CapaDef[] = [
       "Tráfico captado por la red comunitaria ADS-B, sin filtrar. Naranja: aeronave militar (p. ej. el puente aéreo RAF a Mount Pleasant). Cobertura limitada: muchas aeronaves militares vuelan sin transponder.",
     badge: "en vivo",
     mapLayers: ["adsb-circle", "adsb-label"],
-    defaultOn: true,
+    defaultOn: false,
+    proximamente: true,
   },
 ];

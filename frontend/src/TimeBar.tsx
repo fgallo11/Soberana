@@ -20,6 +20,8 @@ export interface Tiempo {
 interface Props {
   tiempo: Tiempo | null;
   onTiempo: (t: Tiempo | null) => void;
+  /** modo "próximamente": el reproductor se ve pero no responde (sin datos vivos/históricos aún) */
+  proximamente?: boolean;
 }
 
 function hoyISO(): string {
@@ -55,7 +57,7 @@ function minutoAhoraUTC(): number {
   return d.getUTCHours() * 60 + d.getUTCMinutes();
 }
 
-export default function TimeBar({ tiempo, onTiempo }: Props) {
+export default function TimeBar({ tiempo, onTiempo, proximamente }: Props) {
   const [reproduciendo, setReproduciendo] = useState(false);
   const [velocidad, setVelocidad] = useState(1);
 
@@ -110,6 +112,33 @@ export default function TimeBar({ tiempo, onTiempo }: Props) {
     setVelocidad((v) => VELOCIDADES[(VELOCIDADES.indexOf(v) + 1) % VELOCIDADES.length]);
 
   const minutoMax = useMemo(() => (esHoy ? minutoAhoraUTC() : 1439), [esHoy, tiempo]);
+
+  // Modo "próximamente": el reproductor sigue visible pero inerte. El viaje en
+  // el tiempo y la vista en vivo de buques se activan cuando el sistema empiece
+  // a registrar posiciones AIS (VM con aisstream).
+  if (proximamente) {
+    return (
+      <div className="timebar timebar-prox" role="group" aria-label="Línea de tiempo (próximamente)">
+        <div className="tb-controles">
+          <input type="date" className="tb-fecha-input" value="" disabled readOnly aria-hidden />
+          <button disabled>◀</button>
+          <button className="tb-play" disabled>▶</button>
+          <button disabled>▶</button>
+          <button disabled>×1</button>
+          <button className="tb-live" disabled>● VIVO</button>
+        </div>
+        <input type="range" min={0} max={100} value={0} disabled readOnly aria-hidden />
+        <div className="tb-estado">
+          <span className="tb-modo prox">⏪ ARCHIVO · próximamente</span>
+          <span className="tb-fecha">vista en vivo e histórico: en preparación</span>
+        </div>
+        <div className="tb-nota">
+          🎬 La reproducción de movimientos (AIS en vivo e histórico) se activará cuando el sistema
+          empiece a registrar posiciones. Por ahora el mapa muestra el estado disponible.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="timebar" role="group" aria-label="Viaje en el tiempo">

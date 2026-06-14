@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
-import { HAY_BACKEND } from "./config";
+import { useMemo, useState } from "react";
 import { CAPAS } from "./layers";
 import MapView, { type Info } from "./MapView";
 import InfoCard from "./InfoCard";
@@ -15,14 +14,12 @@ export default function App() {
   const [pestania, setPestania] = useState<Pestania>(
     location.hash.startsWith("#evento") ? "eventos" : "mapa",
   );
-  const [demo, setDemo] = useState(false);
-  const [tiempo, setTiempo] = useState<Tiempo | null>(null); // null = en vivo
+  const [tiempo, setTiempo] = useState<Tiempo | null>(null); // null = en vivo (hoy: deshabilitado)
   const [panelAbierto, setPanelAbierto] = useState(false); // cajón de capas (móvil)
   const [info, setInfo] = useState<Info | null>(null); // ficha del feature tocado
   const [visibles, setVisibles] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CAPAS.map((c) => [c.id, c.defaultOn && !(c.requiereBackend && !HAY_BACKEND)])),
+    Object.fromEntries(CAPAS.map((c) => [c.id, c.defaultOn && !c.proximamente])),
   );
-  const onDemo = useCallback(() => setDemo(true), []);
 
   const grupos = useMemo(() => {
     const g = new Map<string, typeof CAPAS>();
@@ -60,13 +57,6 @@ export default function App() {
         </nav>
       </header>
 
-      {demo && pestania === "mapa" && (
-        <div className="banner-demo">
-          ⚠ Algunas capas muestran <b>datos de demostración</b> (no representan buques ni eventos reales).
-          Se reemplazan automáticamente cuando los jobs de ingesta corren con credenciales configuradas.
-        </div>
-      )}
-
       {pestania === "mapa" && (
         <div className="cuerpo">
           <button
@@ -82,22 +72,22 @@ export default function App() {
               <section key={grupo}>
                 <h3>{grupo}</h3>
                 {capas.map((c) => {
-                  const deshabilitada = Boolean(c.requiereBackend && !HAY_BACKEND);
+                  const prox = Boolean(c.proximamente);
                   return (
-                    <label key={c.id} className={`capa ${deshabilitada ? "deshabilitada" : ""}`}>
+                    <label key={c.id} className={`capa ${prox ? "deshabilitada" : ""}`}>
                       <input
                         type="checkbox"
-                        checked={visibles[c.id] && !deshabilitada}
-                        disabled={deshabilitada}
+                        checked={Boolean(visibles[c.id]) && !prox}
+                        disabled={prox}
                         onChange={(e) => setVisibles((v) => ({ ...v, [c.id]: e.target.checked }))}
                       />
                       <span className="capa-titulo">
-                        {c.titulo} <em className={`badge b-${c.badge.replace(/[^a-z0-9]+/gi, "")}`}>{c.badge}</em>
+                        {c.titulo}{" "}
+                        {prox
+                          ? <em className="badge b-proximamente">próximamente</em>
+                          : <em className={`badge b-${c.badge.replace(/[^a-z0-9]+/gi, "")}`}>{c.badge}</em>}
                       </span>
-                      <small>
-                        {c.descripcion}
-                        {deshabilitada && " (requiere el backend desplegado — ver docs/despliegue.md)"}
-                      </small>
+                      <small>{c.descripcion}</small>
                     </label>
                   );
                 })}
@@ -109,9 +99,9 @@ export default function App() {
             </p>
           </aside>
           <div className="mapa-zona">
-            <MapView visibles={visibles} tiempo={tiempo} onDemo={onDemo} onSelect={setInfo} />
+            <MapView visibles={visibles} tiempo={tiempo} onSelect={setInfo} />
             {info && <InfoCard info={info} onClose={() => setInfo(null)} />}
-            <TimeBar tiempo={tiempo} onTiempo={setTiempo} />
+            <TimeBar tiempo={tiempo} onTiempo={setTiempo} proximamente />
           </div>
         </div>
       )}
