@@ -1,4 +1,4 @@
-import maplibregl, { GeoJSONSource, Map as MLMap, Popup } from "maplibre-gl";
+import maplibregl, { GeoJSONSource, Map as MLMap } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 import { API_URL, HAY_BACKEND, LIMITES, VISTA_INICIAL_BOUNDS, ZOOM_MAX, ZOOM_MIN } from "./config";
 import { CAPAS } from "./layers";
@@ -10,6 +10,8 @@ import type { Tiempo } from "./TimeBar";
 
 interface Props {
   visibles: Record<string, boolean>;
+  /** se llama al tocar un feature (o null al tocar vacío) */
+  onSelect: (info: Info | null) => void;
   /** null = en vivo; {fecha, minuto} = modo archivo (barra de tiempo) */
   tiempo: Tiempo | null;
   onDemo: () => void;
@@ -115,57 +117,52 @@ function fechaLocal(iso?: string | null): string {
   }
 }
 
-function fmtCoord(lng: number, lat: number): string {
-  const ns = lat < 0 ? "S" : "N";
-  const ew = lng < 0 ? "O" : "E";
-  return `${Math.abs(lat).toFixed(4)}°${ns}, ${Math.abs(lng).toFixed(4)}°${ew}`;
-}
-
-interface PopupOpts {
+export interface Info {
+  titulo: string;
+  filas: Array<[string, unknown]>;
   descripcion?: string;
   nota?: string;
   fuente?: string;
   coord?: [number, number]; // [lng, lat]
+  alerta?: boolean;         // resalta en rojo (territorio/instalación extranjera)
 }
 
-/** Renderizador único de info: título + datos + descripción + nota + fuente + coordenadas. */
-function infoHTML(titulo: string, filas: Array<[string, unknown]>, opts: PopupOpts = {}): string {
-  const cuerpo = filas
-    .filter(([, v]) => v !== null && v !== undefined && v !== "")
-    .map(([k, v]) => `<div class="pp-row"><span>${k}</span><b>${v}</b></div>`)
-    .join("");
-  const desc = opts.descripcion ? `<p class="pp-desc">${opts.descripcion}</p>` : "";
-  const nota = opts.nota ? `<p class="pp-nota">${opts.nota}</p>` : "";
-  const coord = opts.coord ? `<div class="pp-coord">📍 ${fmtCoord(opts.coord[0], opts.coord[1])}</div>` : "";
-  const fuente = opts.fuente ? `<div class="pp-fuente">fuente: ${opts.fuente}</div>` : "";
-  return `<div class="pp"><h4>${titulo}</h4>${cuerpo}${desc}${nota}${coord}${fuente}</div>`;
+/** Constructor de la ficha: filtra filas vacías. */
+function mkInfo(titulo: string, filas: Array<[string, unknown]>, opts: Partial<Info> = {}): Info {
+  return {
+    titulo,
+    filas: filas.filter(([, v]) => v !== null && v !== undefined && v !== ""),
+    ...opts,
+  };
 }
 
-/** Popup genérico para features estáticas (zonas, puntos de contexto): toma los
- * campos conocidos que existan en las properties. */
-function infoGenerico(p: any, coord: [number, number]): string {
+/** Ficha genérica para features estáticas (zonas, puntos de contexto). */
+function infoGenerico(p: any, coord: [number, number]): Info {
   const filas: Array<[string, unknown]> = [
     ["País", p.pais],
     ["Fuerza", p.fuerza],
     ["Tipo", p.tipo && !["isla", "base", "sector", "curso", "troncal", "milla_200"].includes(p.tipo) ? p.tipo : null],
     ["Río", p.rio],
   ];
-  const titulo = p.extranjera || (p.pais && p.pais !== "Argentina") ? `🔴 ${p.nombre}` : p.nombre;
-  return infoHTML(titulo, filas, {
+  const alerta = Boolean(p.extranjera || (p.pais && p.pais !== "Argentina"));
+  return mkInfo(p.nombre, filas, {
     descripcion: p.descripcion,
     nota: p.detalle && p.detalle !== p.descripcion ? p.detalle : undefined,
     fuente: p.fuente,
     coord,
+    alerta,
   });
 }
 
-export default function MapView({ visibles, tiempo, onDemo }: Props) {
+export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
   const contRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const visRef = useRef(visibles);
   visRef.current = visibles;
   const tiempoRef = useRef(tiempo);
   tiempoRef.current = tiempo;
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
   const cargarAISRef = useRef<() => void>(() => {});
   // película del día cargada: { fecha, buques }
   const replayRef = useRef<{ fecha: string; buques: ReplayDia } | null>(null);
@@ -482,38 +479,38 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
       cargarAeronaves();
       timers.push(window.setInterval(cargarAeronaves, 30_000));
 
-      // ---------- popups ----------
+      // ---------- fichas de info ----------
       // c = [lng, lat] del punto a mostrar (geometría del feature si es Point, si no el click)
       // El ORDEN define prioridad: primero puntos (targets chicos), después
       // líneas, y al final los rellenos grandes (que si no taparían todo).
-      const renderers: Array<[string, (p: any, c: [number, number]) => string]> = [
+      const renderers: Array<[string, (p: any, c: [number, number]) => Info]> = [
         // --- puntos dinámicos ---
         ["sar-circle", (p, c) =>
-          infoHTML(
+          mkInfo(
             p.matched ? "Detección SAR (correlacionada con AIS)" : "Detección SAR no correlacionada con AIS",
             [["Fecha", p.fecha], ["Fuente", p.fuente ?? "GFW / Sentinel-1"]],
-            { coord: c, nota: p.matched ? undefined :
+            { coord: c, alerta: !p.matched, nota: p.matched ? undefined :
               "Un buque presente que no transmitía AIS. NO implica por sí solo actividad ilegal." })],
-        ["viirs-circle", (p, c) => infoHTML("Luz de barco (VIIRS)", [["Fecha", p.fecha]],
+        ["viirs-circle", (p, c) => mkInfo("Luz de barco (VIIRS)", [["Fecha", p.fecha]],
           { coord: c, nota: "Detección nocturna por luz. Típicamente flota potera. No identifica al buque." })],
         ["ais-circle", (p, c) =>
-          infoHTML(p.name || `MMSI ${p.mmsi}`, [
+          mkInfo(p.name || `MMSI ${p.mmsi}`, [
             ["MMSI", p.mmsi], ["Bandera", p.flag], ["Velocidad", p.sog != null ? `${p.sog} kn` : null],
             ["Último contacto", fechaLocal(p.ts)],
           ], { coord: c, nota: "Posición autoreportada por AIS: puede ser falseada." })],
         ["adsb-circle", (p, c) =>
-          infoHTML((p.callsign || p.hex) + (p.mil ? " 🔶" : ""), [
+          mkInfo(p.callsign || p.hex, [
             ["Matrícula", p.reg], ["Tipo", p.type],
             ["Altitud", p.alt_ft != null ? `${p.alt_ft} ft` : null],
             ["Militar", p.mil ? "sí" : "no"],
-          ], { coord: c, nota: p.mil ? "Aeronave militar captada por la red comunitaria ADS-B." : undefined })],
+          ], { coord: c, alerta: Boolean(p.mil), nota: p.mil ? "Aeronave militar captada por la red comunitaria ADS-B." : undefined })],
         ["alarmas-circle", (p, c) =>
-          infoHTML(`🚨 Apagón de AIS — ${p.vessel}`, [
+          mkInfo(`Apagón de AIS — ${p.vessel}`, [
             ["Bandera", p.flag],
             ["Confianza", p.confianza],
             ["Inicio", fechaLocal(p.inicio)],
             ["Reaparición", p.fin ? fechaLocal(p.fin) : "sin registrar"],
-          ], { coord: c, nota: (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
+          ], { coord: c, alerta: true, nota: (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
              "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos." })],
         // --- puntos estáticos ---
         ["bases-circle", infoGenerico],
@@ -526,8 +523,8 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         ["zee-line", infoGenerico],
         // --- rellenos (al final: no deben tapar lo de arriba) ---
         ["ocupados-fill", (p, c) =>
-          infoHTML(`🔴 ${p.nombre}`, [["Estado", p.estado]],
-            { coord: c, descripcion: "Territorio argentino bajo ocupación británica.",
+          mkInfo(p.nombre, [["Estado", p.estado]],
+            { coord: c, alerta: true, descripcion: "Territorio argentino bajo ocupación británica.",
               nota: p.marco_onu || "Argentina reclama la soberanía; la ONU reconoce la disputa pendiente.",
               fuente: "Marco ONU según fuentes oficiales argentinas (Cancillería)" })],
         ["ficz-fill", infoGenerico],
@@ -536,9 +533,7 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
         ["antartida-fill", infoGenerico],    // sector antártico
       ];
       // Prioridad: puntos dinámicos → puntos estáticos → líneas → rellenos.
-      // Un solo handler global elige el feature más específico bajo el click,
-      // así un relleno (ZEE) no tapa un punto chico (una base) ni se abren
-      // dos popups a la vez.
+      // Un solo handler global elige el feature más específico bajo el clic.
       const rendererMap = new Map(renderers);
       const ordenPrioridad = renderers.map(([id]) => id);
       // queryRenderedFeatures lanza si una capa no existe: filtramos a las presentes
@@ -546,16 +541,13 @@ export default function MapView({ visibles, tiempo, onDemo }: Props) {
 
       map.on("click", (e) => {
         const feats = map.queryRenderedFeatures(e.point, { layers: capasPresentes() });
-        if (!feats.length) return;
+        if (!feats.length) { onSelectRef.current(null); return; }
         feats.sort((a, b) => ordenPrioridad.indexOf(a.layer.id) - ordenPrioridad.indexOf(b.layer.id));
         const f = feats[0];
         const c: [number, number] = f.geometry?.type === "Point"
           ? (f.geometry.coordinates as [number, number])
           : [e.lngLat.lng, e.lngLat.lat];
-        new Popup({ closeButton: true, maxWidth: "340px" })
-          .setLngLat(f.geometry?.type === "Point" ? c : e.lngLat)
-          .setHTML(rendererMap.get(f.layer.id)!(f.properties, c))
-          .addTo(map);
+        onSelectRef.current(rendererMap.get(f.layer.id)!(f.properties, c));
       });
       map.on("mousemove", (e) => {
         const hay = map.queryRenderedFeatures(e.point, { layers: capasPresentes() }).length > 0;

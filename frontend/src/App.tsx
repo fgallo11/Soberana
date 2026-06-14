@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { HAY_BACKEND } from "./config";
 import { CAPAS } from "./layers";
-import MapView from "./MapView";
+import MapView, { type Info } from "./MapView";
+import InfoCard from "./InfoCard";
 import Colaborar from "./Colaborar";
 import EventLog from "./EventLog";
 import Metodologia from "./Metodologia";
@@ -17,6 +18,7 @@ export default function App() {
   const [demo, setDemo] = useState(false);
   const [tiempo, setTiempo] = useState<Tiempo | null>(null); // null = en vivo
   const [panelAbierto, setPanelAbierto] = useState(false); // cajón de capas (móvil)
+  const [info, setInfo] = useState<Info | null>(null); // ficha del feature tocado
   const [visibles, setVisibles] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(CAPAS.map((c) => [c.id, c.defaultOn && !(c.requiereBackend && !HAY_BACKEND)])),
   );
@@ -107,7 +109,8 @@ export default function App() {
             </p>
           </aside>
           <div className="mapa-zona">
-            <MapView visibles={visibles} tiempo={tiempo} onDemo={onDemo} />
+            <MapView visibles={visibles} tiempo={tiempo} onDemo={onDemo} onSelect={setInfo} />
+            {info && <InfoCard info={info} onClose={() => setInfo(null)} />}
             <TimeBar tiempo={tiempo} onTiempo={setTiempo} />
           </div>
         </div>
