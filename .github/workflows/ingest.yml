@@ -34,13 +34,13 @@ jobs:
         working-directory: server
         env:
           SOBERANA_DATA_DIR: ../frontend/public/data
-        run: python -m soberana.ingest.static_layers
+        run: python -m soberana.ingest.static_layers || echo "::warning::static_layers falló; se mantienen los archivos commiteados"
 
       - name: Infraestructura crítica (relevo curado, sin token)
         working-directory: server
         env:
           SOBERANA_DATA_DIR: ../frontend/public/data
-        run: python -m soberana.ingest.infraestructura
+        run: python -m soberana.ingest.infraestructura || echo "::warning::infraestructura falló; se mantiene el archivo commiteado"
 
       - name: Extranjerización de tierras (RNTR + Natural Earth, sin token)
         working-directory: server
@@ -82,7 +82,10 @@ jobs:
           if [ -z "$SOBERANA_GFW_API_TOKEN" ]; then
             echo "::notice::GFW_API_TOKEN no configurado: se mantienen los datos existentes"
           else
-            python -m soberana.ingest.gfw todo
+            # eventos y SAR por separado: si uno falla, el otro y el resto del
+            # workflow siguen, y se commitea lo que sí se obtuvo
+            python -m soberana.ingest.gfw eventos || echo "::warning::GFW eventos falló; se mantienen los datos existentes"
+            python -m soberana.ingest.gfw sar || echo "::warning::GFW SAR falló; se mantienen los datos existentes"
           fi
 
       - name: VIIRS (luces nocturnas)
