@@ -87,11 +87,13 @@ BASES_MILITARES = [
      "puerto operativo más cercano a la Antártida). Proyecto de la Armada Argentina con fuerte "
      "interés estratégico de Estados Unidos: en 2024 fue visitada por la entonces jefa del Comando "
      "Sur de EE.UU. No es una base estadounidense; la soberanía y operación son argentinas."),
-    ("Estación Espacio Lejano (China)", -70.1495, -38.1914, "CLTC — vinculada al Ejército Popular de Liberación", "China",
-     "Estación de espacio profundo china en Bajada del Agrio (Neuquén): antena de 35 m, 200 hectáreas "
-     "cedidas por ~50 años, operativa desde 2017. La opera la CLTC (control de satélites del EPL/PLA), "
-     "con escaso control argentino y preocupaciones por su posible uso dual (militar). Único enclave de "
-     "una potencia extranjera en el territorio continental argentino."),
+    ("Estación Espacio Lejano (China)", -70.1495, -38.1914, "CLTC (organismo civil-militar chino)", "China",
+     "NO es una base militar con efectivos: es una estación CIENTÍFICA de rastreo de espacio profundo "
+     "(antena de 35 m) que apoya el programa lunar chino, operada por personal técnico. Bajada del Agrio "
+     "(Neuquén): 200 hectáreas cedidas por ~50 años, operativa desde 2017. La preocupación de soberanía "
+     "no son tropas sino el OPERADOR —la CLTC, que controla satélites para el Ejército Popular de "
+     "Liberación— sumado al escaso control argentino del sitio y a su potencial uso dual. Único enclave "
+     "de una potencia extranjera en el territorio continental argentino."),
     ("Base Aeronaval Almirante Quijada (Río Grande)", -67.750, -53.778, "Armada Argentina", "Argentina",
      "Base aeronaval en Tierra del Fuego, clave en la vigilancia del Atlántico Sur."),
     ("BAM Río Gallegos", -69.312, -51.609, "Fuerza Aérea Argentina", "Argentina",
