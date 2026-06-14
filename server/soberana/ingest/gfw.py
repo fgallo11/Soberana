@@ -14,7 +14,7 @@ Uso: python -m soberana.ingest.gfw [eventos|sar|todo]
 import json
 import logging
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -88,6 +88,21 @@ def ingerir_eventos(dias: int = 30) -> int:
     return total
 
 
+def _a_datetime(valor) -> datetime | None:
+    """GFW devuelve fechas como ISO 8601 (str) o epoch en milisegundos (int).
+    SQLite/SQLAlchemy necesitan un objeto datetime, no un string."""
+    if valor is None:
+        return None
+    if isinstance(valor, (int, float)):
+        return datetime.fromtimestamp(valor / 1000, tz=timezone.utc)
+    if isinstance(valor, str):
+        try:
+            return datetime.fromisoformat(valor.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return None
+
+
 def _guardar_eventos(eng, tipo: str, entries: list[dict]) -> int:
     n = 0
     with eng.begin() as conn:
@@ -108,8 +123,8 @@ def _guardar_eventos(eng, tipo: str, entries: list[dict]) -> int:
                     flag=vessel.get("flag"),
                     lat=pos.get("lat"),
                     lon=pos.get("lon"),
-                    started_at=e.get("start"),
-                    ended_at=e.get("end"),
+                    started_at=_a_datetime(e.get("start")),
+                    ended_at=_a_datetime(e.get("end")),
                     zone="ZEE",
                     raw=e,
                 )

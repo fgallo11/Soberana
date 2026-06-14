@@ -104,6 +104,32 @@ def test_gfw_tiles_sin_token_devuelve_503():
     assert r.status_code == 503  # sin token configurado en tests
 
 
+def test_gfw_eventos_fechas_string_se_guardan():
+    """Regresión: GFW devuelve fechas como string ISO / epoch ms; deben
+    convertirse a datetime antes de insertar (si no, SQLite tira TypeError)."""
+    from datetime import datetime
+
+    from soberana.ingest.gfw import _a_datetime, _guardar_eventos
+
+    assert isinstance(_a_datetime("2026-01-15T10:30:00.000Z"), datetime)
+    assert isinstance(_a_datetime(1736937000000), datetime)
+    assert _a_datetime(None) is None
+    assert _a_datetime("basura") is None
+
+    init_db()
+    entradas = [{
+        "id": "evt-test-1",
+        "start": "2026-01-15T10:30:00.000Z",
+        "end": "2026-01-15T18:00:00.000Z",
+        "position": {"lat": -45.0, "lon": -60.0},
+        "vessel": {"ssvid": "701000123", "name": "TEST", "flag": "ARG"},
+    }]
+    n = _guardar_eventos(get_engine(), "ais_gap_gfw", entradas)
+    assert n == 1
+    r = client.get("/api/events", params={"type": "ais_gap_gfw"})
+    assert any(e["id"] == "gfw-evt-test-1" for e in r.json()["events"])
+
+
 def test_capas_estaticas_se_generan(tmp_path):
     from soberana.ingest.static_layers import generar
     archivos = generar(out_dir=str(tmp_path))
