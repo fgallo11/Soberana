@@ -40,7 +40,7 @@ export default function App() {
           <PixelFlag escala={2} />
           <div>
             <h1>SOBERANA<span className="cursor">█</span></h1>
-            <span className="lema">&gt;&gt; qué pasa en el mar argentino · datos abiertos · sin publicidad · para siempre</span>
+            <span className="lema">&gt;&gt; soberanía argentina a la vista · mar · ríos · aire · territorio · datos abiertos · sin publicidad</span>
           </div>
         </div>
         <nav className="pestanias">

@@ -1,10 +1,13 @@
 # Soberana
 
-**Mapa público de actividad marítima, fluvial y aérea en territorio argentino.**
-Hidrovía Paraná–Paraguay · Zona Económica Exclusiva · milla 201 · Malvinas y Atlántico Sur.
+**Mapa público de la soberanía argentina a la vista.**
+Mar, ríos, aire y territorio: actividad marítima/fluvial/aérea (Hidrovía, ZEE, milla 201,
+Malvinas y Atlántico Sur), bases militares propias y extranjeras, presencia extranjera en
+infraestructura crítica (litio, represas, cables, puertos) y extranjerización de tierras.
 
 Gratuito a perpetuidad. Sin publicidad. Sin cuentas. Datos abiertos y código abierto.
-El objetivo es uno solo: que cualquier persona pueda ver qué pasa en los mares y ríos argentinos.
+El objetivo es uno solo: que cualquier persona pueda ver más claro dónde nos invaden, dónde
+nos sacan, cuándo y cómo — en los mares, los ríos, el aire y el territorio argentino.
 
 > 📋 El plan operativo (alcance, fuentes, trade-offs, roadmap) está en [PLAN.md](PLAN.md).
 > 🧭 La visión completa —soberanía por dominios: marítimo, Hidrovía, territorial, energético, digital, aéreo— en [docs/vision.md](docs/vision.md).

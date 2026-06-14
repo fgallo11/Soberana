@@ -24,6 +24,16 @@ export const CAPAS: CapaDef[] = [
     defaultOn: true,
   },
   {
+    id: "tierras",
+    grupo: "Soberanía",
+    titulo: "Extranjerización de tierras (provincias)",
+    descripcion:
+      "Porcentaje de tierra rural en manos extranjeras por provincia (dato oficial del RNTR; ~5-6% nacional, ~13 M ha). En rojo los departamentos que superan ampliamente el ex tope del 15% (San Carlos, Molinos, Lácar). La ley 26.737 fue derogada en 2023. Capa opcional, apagada por defecto.",
+    badge: "estático",
+    mapLayers: ["tierras-fill", "tierras-line", "tierras-depto", "tierras-depto-label"],
+    defaultOn: false,
+  },
+  {
     id: "infra",
     grupo: "Soberanía",
     titulo: "Infraestructura crítica (control extranjero)",

@@ -283,6 +283,42 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
         paint: { "text-color": "#dfe6e9", "text-halo-color": "#000000", "text-halo-width": 1 },
       });
 
+      // ---------- extranjerización de tierras (choropleth provincial) ----------
+      map.addSource("tierras", { type: "geojson", data: "/data/extranjerizacion.geojson" });
+      map.addLayer({
+        id: "tierras-fill", type: "fill", source: "tierras",
+        filter: ["==", ["get", "tipo"], "provincia"],
+        paint: {
+          "fill-color": [
+            "case", ["==", ["get", "pct"], null], "#2a2a2a",
+            ["step", ["get", "pct"], "#1a3a1a", 2, "#5a4a00", 5, "#8a5a00", 10, "#b03000", 15, "#ff2a2a"],
+          ],
+          "fill-opacity": 0.5,
+        },
+      });
+      map.addLayer({
+        id: "tierras-line", type: "line", source: "tierras",
+        filter: ["==", ["get", "tipo"], "provincia"],
+        paint: { "line-color": "#7a5a2a", "line-width": 0.6, "line-opacity": 0.6 },
+      });
+      map.addLayer({
+        id: "tierras-depto", type: "circle", source: "tierras",
+        filter: ["==", ["get", "tipo"], "departamento"],
+        paint: {
+          "circle-radius": 7, "circle-color": "#ff2a2a",
+          "circle-stroke-color": "#000", "circle-stroke-width": 1.5,
+        },
+      });
+      map.addLayer({
+        id: "tierras-depto-label", type: "symbol", source: "tierras", minzoom: 4,
+        filter: ["==", ["get", "tipo"], "departamento"],
+        layout: {
+          "text-field": ["concat", ["to-string", ["get", "pct"]], "%"],
+          "text-font": FUENTE_TEXTO, "text-size": 10, "text-offset": [0, 1.1], "text-anchor": "top",
+        },
+        paint: { "text-color": "#ff7a6a", "text-halo-color": "#000", "text-halo-width": 1 },
+      });
+
       // ---------- infraestructura crítica con presencia extranjera ----------
       map.addSource("infra", { type: "geojson", data: "/data/infraestructura_critica.geojson" });
       map.addLayer({
@@ -539,6 +575,8 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
           ], { coord: c, alerta: true, nota: (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
              "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos." })],
         // --- puntos estáticos ---
+        ["tierras-depto", (p, c) => mkInfo(p.nombre, [["Tipo", "Departamento"]],
+          { coord: c, alerta: true, descripcion: p.descripcion, fuente: p.fuente })],
         ["infra-circle", infoGenerico],
         ["bases-circle", infoGenerico],
         ["antartida-bases", infoGenerico],
@@ -558,6 +596,9 @@ export default function MapView({ visibles, tiempo, onDemo, onSelect }: Props) {
         ["amps-fill", infoGenerico],
         ["zee-fill", infoGenerico],
         ["antartida-fill", infoGenerico],    // sector antártico
+        ["tierras-fill", (p, c) => mkInfo(`${p.nombre} — extranjerización de tierras`,
+          [["Provincia", p.nombre], ["Extranjerizado", p.pct != null ? `${p.pct}%` : "sin dato"]],
+          { coord: c, alerta: p.pct != null && p.pct >= 5, descripcion: p.descripcion, fuente: p.fuente })],
       ];
       // Prioridad: puntos dinámicos → puntos estáticos → líneas → rellenos.
       // Un solo handler global elige el feature más específico bajo el clic.
