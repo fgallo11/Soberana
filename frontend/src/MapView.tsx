@@ -443,35 +443,117 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       try {
         const ev = await fetch(HAY_BACKEND ? `${API_URL}/api/events?limit=500` : "/data/events.json")
           .then((r) => r.json());
+
+        const todosEventos: any[] = ev.events ?? [];
+
+        // Índice MMSI → todos sus eventos (para detectar loitering previo/posterior)
+        const mmsiEventos = new Map<string, any[]>();
+        for (const e of todosEventos) {
+          if (e.mmsi) {
+            if (!mmsiEventos.has(e.mmsi)) mmsiEventos.set(e.mmsi, []);
+            mmsiEventos.get(e.mmsi)!.push(e);
+          }
+        }
+
+        function analizarRiesgo(e: any): { nivel: string; etiqueta: string; indicadores: string[] } {
+          let score = 0;
+          const ind: string[] = [];
+          const mmsi = String(e.mmsi ?? "");
+
+          // MMSI reservado (97x/98x/99x = SAR, EPIRB, AtoN — no buques comerciales)
+          if (mmsi && /^9[789]/.test(mmsi)) {
+            score += 3;
+            ind.push("MMSI reservado — prefijo no asignado a buques comerciales");
+          }
+          // Sin nombre ni bandera en GFW
+          if (!e.vessel_name && !e.flag) {
+            score += 2;
+            ind.push("Sin nombre ni bandera registrados en GFW");
+          }
+          // Alta mar (fuera de toda ZEE)
+          if ((e.raw?.regions?.eez ?? []).length === 0) {
+            score += 1;
+            ind.push("Posición en alta mar — fuera de toda ZEE");
+          }
+          // Lejos de puerto
+          const distPuerto = e.raw?.distances?.startDistanceFromPortKm;
+          if (distPuerto != null && distPuerto > 500) {
+            score += 1;
+            ind.push(`${Math.round(distPuerto).toLocaleString("es-AR")} km del puerto más cercano`);
+          }
+          // Loitering del mismo MMSI en las 72 h previas o posteriores al gap
+          if (mmsi) {
+            const iguales = mmsiEventos.get(mmsi) ?? [];
+            const gapT = e.started_at ? Date.parse(e.started_at) : null;
+            const V = 72 * 3_600_000;
+            const tieneLoitering = iguales.some((o: any) => {
+              if (o.type !== "loitering" || o.id === e.id) return false;
+              const oFin = o.ended_at ? Date.parse(o.ended_at) : null;
+              const oIni = o.started_at ? Date.parse(o.started_at) : null;
+              return gapT != null && (
+                (oFin != null && Math.abs(gapT - oFin) < V) ||
+                (oIni != null && Math.abs(gapT - oIni) < V)
+              );
+            });
+            if (tieneLoitering) {
+              score += 3;
+              ind.push("Loitering registrado por GFW en la misma zona (72 h)");
+            }
+          }
+
+          let nivel = "", etiqueta = "";
+          if (score >= 6)      { nivel = "alto";  etiqueta = "Evasión probable"; }
+          else if (score >= 3) { nivel = "medio"; etiqueta = "Perfil sospechoso"; }
+          else if (score >= 1) { nivel = "bajo";  etiqueta = "Vigilar"; }
+
+          return { nivel, etiqueta, indicadores: ind };
+        }
+
         map.addSource("alarmas", {
           type: "geojson",
           data: {
             type: "FeatureCollection",
-            features: (ev.events ?? [])
+            features: todosEventos
               .filter((e: any) => e.lat != null && e.lon != null && e.type.startsWith("ais_gap"))
-              .map((e: any) => ({
-                type: "Feature",
-                geometry: { type: "Point", coordinates: [e.lon, e.lat] },
-                properties: {
-                  id: e.id,
-                  vessel: e.vessel_name || (e.mmsi ? `MMSI ${e.mmsi}` : "no identificado"),
-                  flag: e.flag,
-                  confianza: e.confidence,
-                  inicio: e.started_at,
-                  fin: e.ended_at,
-                  dia: (e.started_at ?? "").slice(0, 10),
-                  demo: Boolean(e.demo),
-                },
-              })),
+              .map((e: any) => {
+                const r = analizarRiesgo(e);
+                return {
+                  type: "Feature",
+                  geometry: { type: "Point", coordinates: [e.lon, e.lat] },
+                  properties: {
+                    id: e.id,
+                    vessel: e.vessel_name || (e.mmsi ? `MMSI ${e.mmsi}` : "no identificado"),
+                    flag: e.flag,
+                    confianza: e.confidence,
+                    inicio: e.started_at,
+                    fin: e.ended_at,
+                    dia: (e.started_at ?? "").slice(0, 10),
+                    demo: Boolean(e.demo),
+                    riesgo_nivel: r.nivel,
+                    riesgo_etiqueta: r.etiqueta,
+                    riesgo_indicadores: JSON.stringify(r.indicadores),
+                    dist_puerto_km: e.raw?.distances?.startDistanceFromPortKm ?? null,
+                    dist_costa_km: e.raw?.distances?.startDistanceFromShoreKm ?? null,
+                  },
+                };
+              }),
           },
         });
+
+        const colorRiesgo: maplibregl.ExpressionSpecification = [
+          "case",
+          ["==", ["get", "riesgo_nivel"], "alto"],  "#ff3b30",
+          ["==", ["get", "riesgo_nivel"], "medio"], "#ff9f1a",
+          ["==", ["get", "riesgo_nivel"], "bajo"],  "#ffd166",
+          "#9aa7b3",
+        ];
         map.addLayer({
           id: "alarmas-halo", type: "circle", source: "alarmas",
           paint: {
             "circle-radius": 11,
             "circle-color": "transparent",
             "circle-stroke-width": 1.5,
-            "circle-stroke-color": ["case", ["==", ["get", "confianza"], "alta"], "#ff9f1a", "#9aa7b3"],
+            "circle-stroke-color": colorRiesgo,
             "circle-stroke-opacity": 0.55,
           },
         });
@@ -479,7 +561,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
           id: "alarmas-circle", type: "circle", source: "alarmas",
           paint: {
             "circle-radius": 4.5,
-            "circle-color": ["case", ["==", ["get", "confianza"], "alta"], "#ff9f1a", "#9aa7b3"],
+            "circle-color": colorRiesgo,
             "circle-stroke-color": "#000",
             "circle-stroke-width": 1,
           },
@@ -583,14 +665,30 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
             ["Altitud", p.alt_ft != null ? `${p.alt_ft} ft` : null],
             ["Militar", p.mil ? "sí" : "no"],
           ], { coord: c, alerta: Boolean(p.mil), nota: p.mil ? "Aeronave militar captada por la red comunitaria ADS-B." : undefined })],
-        ["alarmas-circle", (p, c) =>
-          mkInfo(`Apagón de AIS — ${p.vessel}`, [
-            ["Bandera", p.flag],
-            ["Confianza", p.confianza],
-            ["Inicio", fechaLocal(p.inicio)],
-            ["Reaparición", p.fin ? fechaLocal(p.fin) : "sin registrar"],
-          ], { coord: c, alerta: true, nota: (p.demo ? "DATO DE DEMOSTRACIÓN. " : "") +
-             "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos." })],
+        ["alarmas-circle", (p, c) => {
+          const indicadores: string[] = (() => {
+            try { return JSON.parse(p.riesgo_indicadores || "[]"); } catch { return []; }
+          })();
+          const nivelEmoji = p.riesgo_nivel === "alto" ? "🔴"
+            : p.riesgo_nivel === "medio" ? "🟡"
+            : p.riesgo_nivel === "bajo"  ? "⚪" : null;
+          const filas: Array<[string, unknown]> = ([
+            ["Bandera", p.flag] as [string, unknown],
+            ["Confianza", p.confianza] as [string, unknown],
+            ["Inicio", fechaLocal(p.inicio)] as [string, unknown],
+            ["Reaparición", p.fin ? fechaLocal(p.fin) : "sin registrar"] as [string, unknown],
+            p.dist_costa_km != null ? [`Dist. a costa`, `${Math.round(p.dist_costa_km).toLocaleString("es-AR")} km`] as [string, unknown] : null,
+            p.dist_puerto_km != null ? [`Dist. a puerto`, `${Math.round(p.dist_puerto_km).toLocaleString("es-AR")} km`] as [string, unknown] : null,
+            nivelEmoji ? [`${nivelEmoji} Evaluación`, p.riesgo_etiqueta] as [string, unknown] : null,
+          ] as (([string, unknown]) | null)[]).filter((x): x is [string, unknown] => x !== null);
+          const notaPartes = [
+            p.demo ? "DATO DE DEMOSTRACIÓN." : "",
+            indicadores.length > 0 ? `Indicadores: ${indicadores.join(" · ")}` : "",
+            "Última posición antes de dejar de transmitir. No implica por sí solo actividad ilegal. Detalle en la pestaña Registro de eventos.",
+          ].filter(Boolean);
+          return mkInfo(`Apagón de AIS — ${p.vessel}`, filas,
+            { coord: c, alerta: true, nota: notaPartes.join(" ") });
+        }],
         // --- puntos estáticos ---
         ["tierras-depto", (p, c) => mkInfo(p.nombre, [["Tipo", "Departamento"]],
           { coord: c, alerta: true, descripcion: p.descripcion, fuente: p.fuente })],
