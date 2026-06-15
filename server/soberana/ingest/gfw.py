@@ -168,8 +168,8 @@ def ingerir_sar(dias: int = 30) -> Path:
     with _client() as client:
         total = _sar_report(client, desde, hasta)
         try:
-            dark = _sar_report(client, desde, hasta, "matched = false")
-            matched = _sar_report(client, desde, hasta, "matched = true")
+            dark = _sar_report(client, desde, hasta, "matched = 'false'")
+            matched = _sar_report(client, desde, hasta, "matched = 'true'")
         except httpx.HTTPStatusError as exc:
             log.warning("filtro matched de SAR no aceptado (%s); publico sin correlación", exc)
             dark = matched = None

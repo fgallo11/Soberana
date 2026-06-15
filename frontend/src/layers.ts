@@ -33,10 +33,10 @@ export const CAPAS: CapaDef[] = [
     grupo: "Soberanía",
     titulo: "Extranjerización de tierras",
     descripcion:
-      "Tierra rural en manos extranjeras (RNTR): ~13 M ha, ~5% del país; lidera EE.UU. (2,7 M ha), luego Italia y España. Provincias coloreadas por % y, en rojo, los departamentos que superan el ex tope del 15% (San Carlos y Molinos en Salta, General Lamadrid, Lácar, Campana). Ley 26.737 derogada en 2023. Capa opcional, apagada por defecto.",
+      "Tierra rural en manos extranjeras (RNTR): ~13 M ha, ~5% del país; lidera EE.UU. (2,7 M ha), luego Italia y España. Provincias coloreadas por % y, en rojo, los departamentos que superan el ex tope del 15% (San Carlos y Molinos en Salta, General Lamadrid, Lácar, Campana). Ley 26.737 derogada en 2023.",
     badge: "estático",
     mapLayers: ["tierras-fill", "tierras-line", "tierras-depto", "tierras-depto-label"],
-    defaultOn: false,
+    defaultOn: true,
   },
   {
     id: "infra",
