@@ -26,9 +26,9 @@ class Settings(BaseSettings):
     # bbox de vigilancia satelital (lon_min, lat_min, lon_max, lat_max).
     # Deliberadamente MÁS GRANDE que la ZEE: incluye la franja de altamar
     # adyacente a la milla 200 (donde la flota extranjera "estaciona"), el
-    # Agujero Azul, y las aguas de Malvinas, Georgias y Sandwich del Sur.
-    # Lo interesante pasa justo AFUERA del límite, no adentro.
-    bbox_zee: tuple[float, float, float, float] = (-70.0, -63.0, -20.0, -33.0)
+    # Agujero Azul, las aguas de Malvinas, Georgias y Sandwich del Sur, y el
+    # Sector Antártico Argentino (25°O-74°O / hasta ~80°S donde hay cobertura AIS real).
+    bbox_zee: tuple[float, float, float, float] = (-74.0, -80.0, -20.0, -33.0)
     # bbox de cobertura AIS terrestre razonable (Río de la Plata + Hidrovía + litoral)
     bbox_ais_costero: tuple[float, float, float, float] = (-62.5, -41.5, -54.0, -26.0)
     # bbox de tráfico aéreo (continente + Malvinas + corredor Atlántico Sur
