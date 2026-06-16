@@ -198,7 +198,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         id: "zee-fill", type: "fill", source: "zee",
         filter: ["!=", ["get", "tipo"], "milla_200"],
         paint: { "fill-color": "#2e86de", "fill-opacity": 0.05 },
-      });
+      }, "nombre-mar");
       map.addLayer({
         id: "zee-line", type: "line", source: "zee",
         filter: ["==", ["get", "tipo"], "milla_200"],
@@ -210,7 +210,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         id: "antartida-fill", type: "fill", source: "antartida",
         filter: ["==", ["get", "tipo"], "sector"],
         paint: { "fill-color": "#75aadb", "fill-opacity": 0.06 },
-      });
+      }, "nombre-mar");
       map.addLayer({
         id: "antartida-line", type: "line", source: "antartida",
         filter: ["==", ["get", "tipo"], "sector"],
@@ -230,7 +230,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         id: "antartida-bases", type: "circle", source: "antartida",
         filter: ["==", ["get", "tipo"], "base"],
         paint: {
-          "circle-radius": 5,
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 3, 7, 5, 12, 9],
           "circle-color": ["case", ["get", "argentina"], "#2ecc71", "#ff5e57"],
           "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.2,
         },
@@ -249,7 +249,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "ficz-fill", type: "fill", source: "ficz",
         paint: { "fill-color": "#e74c3c", "fill-opacity": 0.07 },
-      });
+      }, "nombre-mar");
       map.addLayer({
         id: "ficz-line", type: "line", source: "ficz",
         paint: { "line-color": "#e74c3c", "line-width": 1.2, "line-dasharray": [2, 2] },
@@ -259,7 +259,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "amps-fill", type: "fill", source: "amps",
         paint: { "fill-color": "#2ecc71", "fill-opacity": 0.08 },
-      });
+      }, "nombre-mar");
       map.addLayer({
         id: "amps-line", type: "line", source: "amps",
         paint: { "line-color": "#2ecc71", "line-width": 1, "line-dasharray": [3, 2] },
@@ -269,7 +269,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "bases-circle", type: "circle", source: "bases",
         paint: {
-          "circle-radius": 6,
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 3, 7, 6, 12, 10],
           "circle-color": ["case", ["get", "extranjera"], "#ff5e57", "#2ecc71"],
           "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5,
         },
@@ -295,17 +295,18 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
           ],
           "fill-opacity": 0.5,
         },
-      });
+      }, "nombre-mar");
       map.addLayer({
         id: "tierras-line", type: "line", source: "tierras",
         filter: ["==", ["get", "tipo"], "provincia"],
         paint: { "line-color": "#7a5a2a", "line-width": 0.6, "line-opacity": 0.6 },
-      });
+      }, "nombre-mar");
       map.addLayer({
         id: "tierras-depto", type: "circle", source: "tierras",
         filter: ["==", ["get", "tipo"], "departamento"],
         paint: {
-          "circle-radius": 7, "circle-color": "#ff2a2a",
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 7, 12, 11],
+          "circle-color": "#ff2a2a",
           "circle-stroke-color": "#000", "circle-stroke-width": 1.5,
         },
       });
@@ -324,7 +325,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "infra-circle", type: "circle", source: "infra",
         paint: {
-          "circle-radius": 6,
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 3, 7, 6, 12, 10],
           "circle-color": [
             "match", ["get", "categoria"],
             "litio", "#ffd166",
@@ -363,7 +364,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addSource("puertos", { type: "geojson", data: "/data/puertos.geojson" });
       map.addLayer({
         id: "puertos-circle", type: "circle", source: "puertos",
-        paint: { "circle-radius": 3, "circle-color": "#74b9ff", "circle-stroke-color": "#fff", "circle-stroke-width": 0.8 },
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2, 8, 3, 12, 6], "circle-color": "#74b9ff", "circle-stroke-color": "#fff", "circle-stroke-width": 0.8 },
       });
       map.addLayer({
         id: "puertos-label", type: "symbol", source: "puertos", minzoom: 6,
@@ -381,7 +382,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addLayer({
           id: "sar-circle", type: "circle", source: "sar",
           paint: {
-            "circle-radius": 4,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2.5, 8, 4, 12, 7],
             "circle-color": [
               "case",
               ["==", ["get", "matched"], true], "#9aa7b3",
@@ -400,7 +401,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addSource("viirs", { type: "geojson", data: viirs });
         map.addLayer({
           id: "viirs-circle", type: "circle", source: "viirs",
-          paint: { "circle-radius": 2.5, "circle-color": "#ffd166", "circle-blur": 0.6, "circle-opacity": 0.9 },
+          paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 1.5, 8, 2.5, 12, 5], "circle-color": "#ffd166", "circle-blur": 0.6, "circle-opacity": 0.9 },
         });
       }
 
@@ -560,7 +561,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addLayer({
           id: "alarmas-circle", type: "circle", source: "alarmas",
           paint: {
-            "circle-radius": 4.5,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3, 8, 5, 12, 8],
             "circle-color": colorRiesgo,
             "circle-stroke-color": "#000",
             "circle-stroke-width": 1,
@@ -579,7 +580,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addSource("ais", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({
         id: "ais-circle", type: "circle", source: "ais",
-        paint: { "circle-radius": 4, "circle-color": "#55efc4", "circle-stroke-color": "#0a3d2e", "circle-stroke-width": 1 },
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2.5, 8, 5, 12, 8], "circle-color": "#55efc4", "circle-stroke-color": "#0a3d2e", "circle-stroke-width": 1 },
       });
       map.addLayer({
         id: "ais-label", type: "symbol", source: "ais", minzoom: 8,
@@ -607,7 +608,10 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "adsb-circle", type: "circle", source: "adsb",
         paint: {
-          "circle-radius": ["case", ["get", "mil"], 6, 3.5],
+          "circle-radius": ["case", ["get", "mil"],
+            ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 6, 12, 10],
+            ["interpolate", ["linear"], ["zoom"], 4, 2.5, 8, 3.5, 12, 6],
+          ],
           "circle-color": ["case", ["get", "mil"], "#ff9f1a", "#a29bfe"],
           "circle-stroke-color": "#fff",
           "circle-stroke-width": ["case", ["get", "mil"], 1.5, 0.5],
@@ -722,8 +726,24 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       // queryRenderedFeatures lanza si una capa no existe: filtramos a las presentes
       const capasPresentes = () => ordenPrioridad.filter((id) => map.getLayer(id));
 
+      // Capas de puntos pequeños: se consultan con un bbox más ancho para
+      // mejorar la precisión al tocar en móvil y cuando están sobre zonas grandes.
+      const CAPAS_PUNTO = new Set([
+        "sar-circle","viirs-circle","ais-circle","adsb-circle","alarmas-circle",
+        "tierras-depto","infra-circle","bases-circle","antartida-bases","puertos-circle",
+      ]);
       map.on("click", (e) => {
-        const feats = map.queryRenderedFeatures(e.point, { layers: capasPresentes() });
+        const todasCapas = capasPresentes();
+        const capasPunto = todasCapas.filter((id) => CAPAS_PUNTO.has(id));
+        const capasResto = todasCapas.filter((id) => !CAPAS_PUNTO.has(id));
+        const TOL = 14; // px de margen para toque en móvil
+        const bbox: [maplibregl.PointLike, maplibregl.PointLike] = [
+          [e.point.x - TOL, e.point.y - TOL],
+          [e.point.x + TOL, e.point.y + TOL],
+        ];
+        const featsPunto = capasPunto.length ? map.queryRenderedFeatures(bbox, { layers: capasPunto }) : [];
+        const featsResto = capasResto.length ? map.queryRenderedFeatures(e.point, { layers: capasResto }) : [];
+        const feats = [...featsPunto, ...featsResto];
         if (!feats.length) { onSelectRef.current(null); return; }
         feats.sort((a, b) => ordenPrioridad.indexOf(a.layer.id) - ordenPrioridad.indexOf(b.layer.id));
         const f = feats[0];
