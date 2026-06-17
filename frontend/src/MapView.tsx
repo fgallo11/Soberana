@@ -379,7 +379,70 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         paint: { "text-color": "#74b9ff", "text-halo-color": "#000", "text-halo-width": 1 },
       });
 
-      // ---------- capas satelitales (archivos regenerados por jobs) ----------
+      // ---------- capas OSM extra (via fuente omt de OpenFreeMap) ----------
+
+      // Zonas militares: relleno de uso militar según OSM (polígonos grandes → bajo etiquetas)
+      map.addLayer({
+        id: "omt-militar-fill", type: "fill", source: "omt", "source-layer": "landuse",
+        filter: ["==", ["get", "class"], "military"],
+        paint: { "fill-color": "#c0392b", "fill-opacity": 0.18 },
+      }, "nombre-mar");
+      map.addLayer({
+        id: "omt-militar-label", type: "symbol", source: "omt", "source-layer": "landuse",
+        filter: ["all", ["==", ["get", "class"], "military"], ["has", "name"]],
+        minzoom: 9,
+        layout: {
+          "text-field": ["get", "name"], "text-font": FUENTE_TEXTO,
+          "text-size": 9, "text-anchor": "center",
+        },
+        paint: { "text-color": "#ff7675", "text-halo-color": "#000", "text-halo-width": 1 },
+      });
+
+      // Aeródromos: áreas y pistas (OSM)
+      map.addLayer({
+        id: "omt-aeroway-fill", type: "fill", source: "omt", "source-layer": "aeroway",
+        filter: ["==", ["get", "class"], "aerodrome"],
+        minzoom: 8,
+        paint: { "fill-color": "#e17055", "fill-opacity": 0.22 },
+      }, "nombre-mar");
+      map.addLayer({
+        id: "omt-aeroway-runway", type: "fill", source: "omt", "source-layer": "aeroway",
+        filter: ["in", ["get", "class"], ["literal", ["runway", "taxiway", "apron"]]],
+        minzoom: 11,
+        paint: { "fill-color": "#636e72", "fill-opacity": 0.6 },
+      });
+      map.addLayer({
+        id: "omt-aeroway-label", type: "symbol", source: "omt", "source-layer": "aeroway",
+        filter: ["all", ["==", ["get", "class"], "aerodrome"], ["has", "name"]],
+        minzoom: 7,
+        layout: {
+          "text-field": ["get", "name"], "text-font": FUENTE_TEXTO,
+          "text-size": 10, "text-anchor": "center",
+        },
+        paint: { "text-color": "#e17055", "text-halo-color": "#000", "text-halo-width": 1 },
+      });
+
+      // Puertos y dársenas OSM (poi harbour) — color teal para distinguirlos de puertos propios
+      map.addLayer({
+        id: "omt-puerto-circle", type: "circle", source: "omt", "source-layer": "poi",
+        filter: ["in", ["get", "class"], ["literal", ["harbour", "ferry"]]],
+        minzoom: 9,
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 9, 4, 12, 8],
+          "circle-color": "#0fb9b1",
+          "circle-stroke-color": "#fff", "circle-stroke-width": 1,
+        },
+      });
+      map.addLayer({
+        id: "omt-puerto-label", type: "symbol", source: "omt", "source-layer": "poi",
+        filter: ["in", ["get", "class"], ["literal", ["harbour", "ferry"]]],
+        minzoom: 10,
+        layout: {
+          "text-field": ["get", "name"], "text-font": FUENTE_TEXTO,
+          "text-size": 10, "text-offset": [0, 1], "text-anchor": "top",
+        },
+        paint: { "text-color": "#0fb9b1", "text-halo-color": "#000", "text-halo-width": 1 },
+      });
       const sar: any = await fetch("/data/sar_detections.geojson").then((r) => r.json()).catch(() => null);
       if (sar) {
         map.addSource("sar", { type: "geojson", data: sar });
@@ -705,6 +768,9 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         ["antartida-bases", infoGenerico],
         ["antartida-label", infoGenerico],   // islas
         ["puertos-circle", (p, c) => infoGenerico({ ...p, nombre: `Puerto ${p.nombre}` }, c)],
+        ["omt-puerto-circle", (p, c) => mkInfo(p.name || "Puerto/muelle",
+          [["Tipo", p.subclass], ["Fuente", "OpenStreetMap"]],
+          { coord: c })],
         // --- líneas ---
         ["hidrovia-troncal", infoGenerico],
         ["hidrovia-curso", infoGenerico],
@@ -722,6 +788,12 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         ["tierras-fill", (p, c) => mkInfo(`${p.nombre} — extranjerización de tierras`,
           [["Provincia", p.nombre], ["Extranjerizado", p.pct != null ? `${p.pct}%` : "sin dato"]],
           { coord: c, alerta: p.pct != null && p.pct >= 5, descripcion: p.descripcion, fuente: p.fuente })],
+        ["omt-aeroway-fill", (p, c) => mkInfo(p.name || "Aeródromo",
+          [["IATA", p.iata], ["ICAO", p.icao], ["Tipo", p.aerodrome], ["Elevación", p.ele != null ? `${p.ele} m` : null]],
+          { coord: c, nota: "Dato de OpenStreetMap." })],
+        ["omt-militar-fill", (p, c) => mkInfo(p.name || "Zona de uso militar",
+          [["Fuente", "OpenStreetMap"]],
+          { coord: c, alerta: true, nota: "Área clasificada como uso militar en OSM. Puede incluir bases, polígonos de tiro o zonas restringidas." })],
       ];
       // Prioridad: puntos dinámicos → puntos estáticos → líneas → rellenos.
       // Un solo handler global elige el feature más específico bajo el clic.
@@ -735,6 +807,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       const CAPAS_PUNTO = new Set([
         "sar-circle","viirs-circle","ais-circle","adsb-circle","alarmas-circle",
         "tierras-depto","infra-circle","bases-circle","antartida-bases","puertos-circle",
+        "omt-puerto-circle",
       ]);
       map.on("click", (e) => {
         const todasCapas = capasPresentes();

@@ -2,7 +2,7 @@ import type { Badge } from "./config";
 
 export interface CapaDef {
   id: string;
-  grupo: "Soberanía" | "Mar y milla 201" | "Hidrovía" | "Aéreo";
+  grupo: "Soberanía" | "Mar y milla 201" | "Hidrovía" | "Aéreo" | "OSM";
   titulo: string;
   descripcion: string;
   badge: Badge;
@@ -158,6 +158,33 @@ export const CAPAS: CapaDef[] = [
     mapLayers: ["alturas-label"],
     defaultOn: false,
     proximamente: true,
+  },
+  {
+    id: "zonas-militares-osm",
+    grupo: "OSM",
+    titulo: "Zonas militares (OSM)",
+    descripcion: "Polígonos de uso militar en OpenStreetMap: bases, polígonos de tiro, zonas restringidas. Complementa la capa de bases militares.",
+    badge: "estático",
+    mapLayers: ["omt-militar-fill", "omt-militar-label"],
+    defaultOn: false,
+  },
+  {
+    id: "aerodromos-osm",
+    grupo: "OSM",
+    titulo: "Aeródromos y pistas (OSM)",
+    descripcion: "Aeropuertos, aeródromos, pistas civiles y militares de OpenStreetMap. A zoom alto se muestran las pistas individuales.",
+    badge: "estático",
+    mapLayers: ["omt-aeroway-fill", "omt-aeroway-runway", "omt-aeroway-label"],
+    defaultOn: false,
+  },
+  {
+    id: "puertos-osm",
+    grupo: "OSM",
+    titulo: "Puertos y dársenas (OSM)",
+    descripcion: "Instalaciones portuarias de OpenStreetMap: puertos, dársenas y terminales de ferry (teal). Complementan los puertos de la DNP.",
+    badge: "estático",
+    mapLayers: ["omt-puerto-circle", "omt-puerto-label"],
+    defaultOn: false,
   },
   {
     id: "aereo",
