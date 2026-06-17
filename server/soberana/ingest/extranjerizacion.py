@@ -89,7 +89,7 @@ def generar(out_dir: str | None = None) -> Path:
             continue
         nombre = props.get("name") or ""
         pct = PORCENTAJES.get(_norm(nombre))
-        geom = shape(f["geometry"]).simplify(0.02)
+        geom = shape(f["geometry"]).simplify(0.001)
         features.append({
             "type": "Feature",
             "geometry": mapping(geom),

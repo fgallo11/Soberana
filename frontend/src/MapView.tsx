@@ -293,13 +293,17 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
             "case", ["==", ["get", "pct"], null], "#2a2a2a",
             ["step", ["get", "pct"], "#1a3a1a", 2, "#5a4a00", 5, "#8a5a00", 10, "#b03000", 15, "#ff2a2a"],
           ],
-          "fill-opacity": 0.5,
+          "fill-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 9, 0.35, 12, 0.15],
         },
       }, "nombre-mar");
       map.addLayer({
         id: "tierras-line", type: "line", source: "tierras",
         filter: ["==", ["get", "tipo"], "provincia"],
-        paint: { "line-color": "#7a5a2a", "line-width": 0.6, "line-opacity": 0.6 },
+        maxzoom: 10,
+        paint: {
+          "line-color": "#7a5a2a", "line-width": 0.6,
+          "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 9, 0.2, 10, 0],
+        },
       }, "nombre-mar");
       map.addLayer({
         id: "tierras-depto", type: "circle", source: "tierras",
