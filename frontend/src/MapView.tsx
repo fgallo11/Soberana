@@ -230,9 +230,9 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         id: "antartida-bases", type: "circle", source: "antartida",
         filter: ["==", ["get", "tipo"], "base"],
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 3, 7, 5, 12, 9],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 5, 7, 8, 12, 14],
           "circle-color": ["case", ["get", "argentina"], "#2ecc71", "#ff5e57"],
-          "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.2,
+          "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5,
         },
       });
       map.addLayer({
@@ -269,7 +269,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "bases-circle", type: "circle", source: "bases",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 3, 7, 6, 12, 10],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 5, 7, 9, 12, 15],
           "circle-color": ["case", ["get", "extranjera"], "#ff5e57", "#2ecc71"],
           "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5,
         },
@@ -305,9 +305,9 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         id: "tierras-depto", type: "circle", source: "tierras",
         filter: ["==", ["get", "tipo"], "departamento"],
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 7, 12, 11],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 6, 8, 10, 12, 16],
           "circle-color": "#ff2a2a",
-          "circle-stroke-color": "#000", "circle-stroke-width": 1.5,
+          "circle-stroke-color": "#fff", "circle-stroke-width": 2,
         },
       });
       map.addLayer({
@@ -325,7 +325,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "infra-circle", type: "circle", source: "infra",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 3, 7, 6, 12, 10],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 5, 7, 9, 12, 15],
           "circle-color": [
             "match", ["get", "categoria"],
             "litio", "#ffd166",
@@ -364,7 +364,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addSource("puertos", { type: "geojson", data: "/data/puertos.geojson" });
       map.addLayer({
         id: "puertos-circle", type: "circle", source: "puertos",
-        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2, 8, 3, 12, 6], "circle-color": "#74b9ff", "circle-stroke-color": "#fff", "circle-stroke-width": 0.8 },
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3, 8, 5, 12, 9], "circle-color": "#74b9ff", "circle-stroke-color": "#fff", "circle-stroke-width": 1 },
       });
       map.addLayer({
         id: "puertos-label", type: "symbol", source: "puertos", minzoom: 6,
@@ -382,7 +382,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addLayer({
           id: "sar-circle", type: "circle", source: "sar",
           paint: {
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2.5, 8, 4, 12, 7],
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 7, 12, 12],
             "circle-color": [
               "case",
               ["==", ["get", "matched"], true], "#9aa7b3",
@@ -561,7 +561,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addLayer({
           id: "alarmas-circle", type: "circle", source: "alarmas",
           paint: {
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3, 8, 5, 12, 8],
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 5, 8, 9, 12, 14],
             "circle-color": colorRiesgo,
             "circle-stroke-color": "#000",
             "circle-stroke-width": 1,
@@ -580,7 +580,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addSource("ais", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addLayer({
         id: "ais-circle", type: "circle", source: "ais",
-        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 2.5, 8, 5, 12, 8], "circle-color": "#55efc4", "circle-stroke-color": "#0a3d2e", "circle-stroke-width": 1 },
+        paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 8, 12, 13], "circle-color": "#55efc4", "circle-stroke-color": "#0a3d2e", "circle-stroke-width": 1.5 },
       });
       map.addLayer({
         id: "ais-label", type: "symbol", source: "ais", minzoom: 8,
@@ -609,8 +609,8 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         id: "adsb-circle", type: "circle", source: "adsb",
         paint: {
           "circle-radius": ["case", ["get", "mil"],
+            ["interpolate", ["linear"], ["zoom"], 4, 6, 8, 10, 12, 16],
             ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 6, 12, 10],
-            ["interpolate", ["linear"], ["zoom"], 4, 2.5, 8, 3.5, 12, 6],
           ],
           "circle-color": ["case", ["get", "mil"], "#ff9f1a", "#a29bfe"],
           "circle-stroke-color": "#fff",
