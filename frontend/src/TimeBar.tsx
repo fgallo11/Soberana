@@ -99,7 +99,7 @@ function calcFuentes(fecha: string | null): Fuente[] {
 
 export default function TimeBar({ tiempo, onTiempo, proximamente }: Props) {
   const [minimizado, setMinimizado] = useState(() =>
-    localStorage.getItem("soberana_tb_min") === "1",
+    localStorage.getItem("soberana_tb_min") !== "0",
   );
   const [reproduciendo, setReproduciendo] = useState(false);
   const [velocidad, setVelocidad] = useState(1);
@@ -164,7 +164,7 @@ export default function TimeBar({ tiempo, onTiempo, proximamente }: Props) {
 
   const fechaRef = tiempo?.fecha ?? hoy;
   const fuentes = calcFuentes(tiempo?.fecha ?? null);
-  const modoLabel = tiempo ? (reproduciendo ? `▶ ×${velocidad}` : "ARCHIVO") : "EN VIVO";
+  const modoLabel = tiempo ? (reproduciendo ? `▶ ×${velocidad}` : "ARCHIVO") : "ÚLTIMOS 30 DÍAS";
 
   // ── MINIMIZADO ─────────────────────────────────────────────────────────────
   if (minimizado) {
@@ -225,7 +225,7 @@ export default function TimeBar({ tiempo, onTiempo, proximamente }: Props) {
         >día ▶</button>
         <button
           onClick={() => irA(null)}
-          title="Volver a hoy (en vivo)"
+          title="Ver todos los datos (últimos 30 días)"
           className={`tb-live ${!tiempo ? "activo" : ""}`}
         >● HOY</button>
       </div>
