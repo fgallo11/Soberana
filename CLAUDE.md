@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git workflow
+
+**Always commit and push directly to `main`.** Never create feature branches. All changes go to `main`.
+
 ## Project
 
 Soberana is a public map of Argentine sovereignty monitoring across maritime, riverine, and aerial domains. It combines open data (AIS, SAR, VIIRS, ADS-B) with no login, no ads, and zero operational cost. Every data layer declares its latency honestly; events are evidence for investigation, never accusations.
