@@ -63,6 +63,7 @@ def ingerir_eventos(dias: int = 30) -> int:
     with _client() as client:
         for tipo, dataset in EVENT_DATASETS.items():
             offset = 0
+            tipo_total = 0
             while True:
                 resp = client.post(
                     "/events",
@@ -74,16 +75,24 @@ def ingerir_eventos(dias: int = 30) -> int:
                         "geometry": _region_geojson(),
                     },
                 )
-                resp.raise_for_status()
+                if resp.status_code != 200:
+                    log.warning("GFW %s (dataset=%s) HTTP %s: %s",
+                                tipo, dataset, resp.status_code, resp.text[:200])
+                    break
                 data = resp.json()
                 entries = data.get("entries", [])
+                tipo_total += len(entries)
                 if not entries:
                     break
                 total += _guardar_eventos(eng, tipo, entries)
                 if data.get("nextOffset") is None:
                     break
                 offset = data["nextOffset"]
-    log.info("eventos GFW ingeridos/actualizados: %d", total)
+            log.info("GFW %s: %d entradas (dataset=%s, rango=%s→%s)",
+                     tipo, tipo_total, dataset, desde, hasta)
+            if tipo_total == 0:
+                log.warning("GFW %s devolvió 0 eventos — dataset puede estar desactualizado o sin acceso", tipo)
+    log.info("eventos GFW ingeridos/actualizados total: %d", total)
     _exportar_eventos_json()
     return total
 

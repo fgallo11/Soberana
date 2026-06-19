@@ -252,7 +252,7 @@ body {
 /* ---------- barra de tiempo ---------- */
 .mapa-zona { flex: 1; position: relative; display: flex; min-width: 0; }
 
-/* contenedor posicionado */
+/* base posicionada (compartida) */
 .timebar,
 .timebar-min {
   position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
@@ -266,20 +266,21 @@ body {
   display: flex; flex-direction: column; gap: 0; padding: 0;
 }
 
-/* ── minimizado ─────────────────────────── */
+/* ── minimizado: tira fina de 40 px ─────── */
 .timebar-min {
-  display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.3rem 0.8rem; cursor: pointer;
-  font-size: 0.95rem; color: var(--texto-suave);
-  white-space: nowrap; overflow: hidden;
+  display: flex; flex-direction: row; align-items: center; gap: 0.5rem;
+  height: 40px; padding: 0 0.8rem; cursor: pointer;
+  overflow: hidden; white-space: nowrap;
 }
 .timebar-min:hover { border-color: var(--fosforo); }
-.tb-modo-mini { font-family: var(--fuente-pixel); font-size: 0.5rem; }
+.tb-modo-mini {
+  font-family: var(--fuente-pixel); font-size: 0.48rem; flex-shrink: 0;
+}
 .tb-modo-mini.vivo { color: var(--rojo); }
 .tb-modo-mini.archivo { color: var(--ambar); }
-.tb-fecha-mini { color: var(--texto); }
-.tb-sep { color: var(--borde); }
-.tb-srcs-mini { color: var(--texto-suave); font-size: 0.9rem; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.tb-sep { color: var(--borde-suave); flex-shrink: 0; }
+.tb-fecha-mini { color: var(--texto); font-size: 0.9rem; flex-shrink: 0; }
+.tb-srcs-mini { color: var(--texto-suave); font-size: 0.85rem; flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .tb-toggle-min {
   background: #000; border: 1px solid var(--borde-suave); color: var(--texto-suave);
   font-family: var(--fuente-pixel); font-size: 0.48rem; padding: 0.25rem 0.5rem;

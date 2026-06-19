@@ -67,17 +67,17 @@ function calcFuentes(fecha: string | null): Fuente[] {
     {
       icono: "📷",
       nombre: "SAR Sentinel-1",
-      valor: `foto ~${off(ref, -5)} (retraso ~5 días)`,
+      valor: `foto ~${off(ref, -5)} · pasada cada ~6 días`,
     },
     {
       icono: "⚠️",
       nombre: "GFW apagones / eventos",
-      valor: `datos hasta ~${off(ref, -3)} (retraso 72 h)`,
+      valor: `hasta ~${off(ref, -3)} · actualización cada 6 h`,
     },
     {
       icono: "📷",
       nombre: "VIIRS luces nocturnas",
-      valor: "noche del día elegido",
+      valor: "noche del día elegido · actualización cada 6 h",
       prox: true,
     },
     {
@@ -169,18 +169,17 @@ export default function TimeBar({ tiempo, onTiempo, proximamente }: Props) {
   // ── MINIMIZADO ─────────────────────────────────────────────────────────────
   if (minimizado) {
     return (
-      <div className="timebar timebar-min" role="group" aria-label="Línea de tiempo (minimizada)">
+      <div className="timebar-min" onClick={toggleMin} title="Expandir línea de tiempo" role="button">
         <span className={`tb-modo-mini ${tiempo ? "archivo" : "vivo"}`}>
           {tiempo ? "⏪" : "●"} {modoLabel}
         </span>
-        <span className="tb-fecha-mini">{fechaLegible(fechaRef)}</span>
         <span className="tb-sep">·</span>
+        <span className="tb-fecha-mini">{fechaLegible(fechaRef)}</span>
         <span className="tb-srcs-mini">
-          SAR ~{fechaCorta(sumarDias(fechaRef, -5))}
-          <span className="tb-sep">·</span>
-          GFW hasta ~{fechaCorta(sumarDias(fechaRef, -3))}
+          · SAR ~{fechaCorta(sumarDias(fechaRef, -5))}
+          · GFW ~{fechaCorta(sumarDias(fechaRef, -3))}
         </span>
-        <button className="tb-toggle-min" onClick={toggleMin} title="Expandir">▲ EXPANDIR</button>
+        <button className="tb-toggle-min" onClick={(e) => { e.stopPropagation(); toggleMin(); }}>▲</button>
       </div>
     );
   }
