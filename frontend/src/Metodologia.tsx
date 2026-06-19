@@ -1,84 +1,92 @@
 export default function Metodologia() {
   return (
     <div className="metodologia">
-      <h2>Qué estás viendo (y qué no)</h2>
+      <h2>Lo que se viene</h2>
+      <p className="log-intro">
+        Soberana está en construcción activa. Estas son las capacidades que se están desarrollando.
+        Todo es software libre, sin publicidad y sin costo.
+      </p>
 
       <section>
-        <h3>La regla de oro</h3>
+        <h3>AIS en tiempo real · aguas exteriores</h3>
         <p>
-          Este mapa muestra <b>actividad aparente</b> según sensores abiertos y señales transmitidas públicamente.
-          No muestra delitos, no identifica culpables, y la ausencia de un buque en el mapa <b>no</b> significa que
-          no esté ahí. Cada capa declara su retraso real.
+          El AIS costero llega hasta ~200 km de la costa. Para cubrir la milla 201 y alta mar necesitamos
+          receptores satelitales. Se está integrando cobertura satelital de bajo costo para ver toda la ZEE
+          y la FOCZ con minutos de retraso, no solo el litoral.
         </p>
       </section>
 
       <section>
-        <h3>Por qué “tiempo real” tiene letra chica</h3>
-        <ul>
-          <li>
-            <b>AIS costero/fluvial (en vivo):</b> el AIS terrestre llega a ~200 km de la costa. La Hidrovía y el
-            litoral se ven con minutos de retraso. <b>La milla 201 (a ~370 km) no se ve por AIS terrestre: nadie
-            la ve gratis en vivo.</b>
-          </li>
-          <li>
-            <b>Global Fishing Watch (72 hs):</b> posiciones satelitales, esfuerzo pesquero y eventos llegan con
-            tres días de retraso. Sirven para entender patrones, no para reaccionar.
-          </li>
-          <li>
-            <b>Radar satelital SAR (~5 días):</b> Sentinel-1 ve cualquier casco metálico, transmita o no. Pero pasa
-            cada 6–12 días por cada punto: entre pasadas, no hay datos.
-          </li>
-          <li>
-            <b>Luces nocturnas VIIRS (~24 hs):</b> detecta las lámparas de la flota potera. Solo de noche; nubes y
-            luna llena lo degradan.
-          </li>
-        </ul>
-      </section>
-
-      <section>
-        <h3>Sobre los buques “dark”</h3>
+        <h3>Detector propio de apagados AIS</h3>
         <p>
-          Un punto rojo (detección SAR sin AIS) o un evento de apagado de AIS indican que un buque estaba presente
-          sin transmitir su posición. Hay causas ilegítimas (pesca ilegal, transbordos) y causas técnicas o legales
-          (fallas, buques no obligados a transmitir). <b>El dato es evidencia para investigar, no una condena.</b>
-          Además, el AIS es autoreportado: la posición y la identidad pueden falsearse (spoofing).
+          En lugar de depender exclusivamente del retraso de 72 horas de GFW, Soberana está desarrollando
+          su propio detector de pérdidas de señal en tiempo casi real: si un buque deja de transmitir en zona
+          sensible, la alarma aparece en minutos, no días.
         </p>
       </section>
 
       <section>
-        <h3>Sobre la capa militar</h3>
+        <h3>Radar SAR en tiempo casi real</h3>
         <p>
-          Mostramos toda aeronave que la red comunitaria ADS-B capte, de cualquier fuerza, sin filtrar — incluido el
-          puente aéreo de la RAF a la base de Mount Pleasant, en las Islas Malvinas (territorio argentino ocupado,
-          conforme a la cartografía oficial del IGN). Limitación honesta: <b>los buques de guerra no transmiten AIS</b>
-          (solo pueden aparecer como detecciones SAR sin identificar) y muchas aeronaves militares vuelan con el
-          transponder apagado. Lo visible es una fracción.
+          Las detecciones actuales de Sentinel-1 llegan con ~5 días de retraso a través de GFW. Se está
+          explorando el acceso directo a los datos SAR de la ESA para reducir ese lag a menos de 24 horas y
+          ampliar la cobertura satelital al Atlántico Sur.
         </p>
       </section>
 
       <section>
-        <h3>Fuentes y licencias</h3>
-        <ul>
-          <li>Actividad pesquera, detecciones SAR y eventos: <a href="https://globalfishingwatch.org">Global Fishing Watch</a> (atribución obligatoria).</li>
-          <li>Luces de barcos: VIIRS Boat Detection, <a href="https://eogdata.mines.edu">Earth Observation Group</a> (Colorado School of Mines / NOAA).</li>
-          <li>AIS costero: <a href="https://aisstream.io">aisstream.io</a> (red comunitaria).</li>
-          <li>Tráfico aéreo: <a href="https://adsb.lol">adsb.lol</a> (red comunitaria, datos sin filtrar).</li>
-          <li>Alturas de los ríos: <a href="https://contenidosweb.prefecturanaval.gob.ar/alturas/">Prefectura Naval Argentina</a>.</li>
-          <li>Cartografía: <a href="https://www.ign.gob.ar">IGN</a>, <a href="https://www.openstreetmap.org">OpenStreetMap</a>, basemap de <a href="https://openfreemap.org">OpenFreeMap</a>.</li>
-        </ul>
+        <h3>Histórico descargable</h3>
         <p>
-          Las geometrías marcadas “aproximadas” (ZEE, FOCZ, AMPs, traza de la Hidrovía) son provisorias y se
-          reemplazan por las fuentes de referencia (Marine Regions, IGN). La FICZ responde a su definición publicada:
-          círculo de 150 millas náuticas centrado en 51°40′S 59°30′W.
+          Todas las posiciones, eventos y detecciones históricas van a estar disponibles para descarga en
+          formato CSV y GeoJSON. El objetivo es que investigadores, periodistas y ciudadanos puedan auditar
+          los datos sin depender de esta interfaz.
         </p>
       </section>
 
       <section>
-        <h3>El proyecto</h3>
+        <h3>Alertas por zona y tipo de buque</h3>
         <p>
-          Soberana es software libre, sin fines de lucro, sin publicidad y gratuito a perpetuidad. Su único objetivo
-          es que cualquier persona pueda ver qué pasa en los mares y ríos argentinos. El código, los pipelines de
-          datos y este sitio son públicos y auditables en el repositorio del proyecto.
+          Suscripción a alertas cuando se detecta actividad relevante en zonas específicas: apagones de AIS
+          en la milla 201, encuentros buque-a-buque fuera de puertos conocidos, o presencia de flotas
+          extranjeras en áreas protegidas. Sin rastreo de usuarios, sin publicidad.
+        </p>
+      </section>
+
+      <section>
+        <h3>Hidrovía: tráfico fluvial completo</h3>
+        <p>
+          La Hidrovía Paraná-Paraguay concentra el 80% del comercio exterior argentino. Se está trabajando
+          en cobertura AIS continua de todo el tramo, integración con los datos de calado y alturas de
+          Prefectura Naval, y cruce con el padrón de buques habilitados.
+        </p>
+      </section>
+
+      <section>
+        <h3>Malvinas: cobertura dedicada</h3>
+        <p>
+          Las Islas Malvinas (territorio argentino actualmente bajo administración británica, conforme a la
+          cartografía oficial del IGN) tienen un espacio marítimo con actividad pesquera intensiva fuera de
+          cualquier control argentino. Se está trabajando en una vista dedicada que muestre qué se captura
+          en esas aguas y quién lo captura.
+        </p>
+      </section>
+
+      <section>
+        <h3>API pública</h3>
+        <p>
+          El backend de Soberana va a exponer una API pública y documentada para que otros proyectos,
+          medios de comunicación y organismos del Estado puedan consultar los datos directamente.
+          Sin límites de uso, sin clave de API, sin costo.
+        </p>
+      </section>
+
+      <section>
+        <h3>Sobre el proyecto</h3>
+        <p>
+          Soberana es software libre, sin fines de lucro, sin publicidad y gratuito a perpetuidad.
+          El código, los pipelines de datos y este sitio son públicos y auditables.
+          Si querés contribuir — datos, código, financiamiento o difusión — visitá la pestaña{" "}
+          <b>[ COLABORÁ ]</b>.
         </p>
       </section>
     </div>

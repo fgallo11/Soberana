@@ -212,6 +212,13 @@ body {
   padding: 0.3rem 0.5rem; font-family: var(--fuente-term); font-size: 1rem;
 }
 .conteo { color: var(--texto-suave); font-size: 1rem; }
+.btn-csv {
+  background: #000; border: 2px solid var(--borde-suave); color: var(--celeste);
+  padding: 0.3rem 0.6rem; cursor: pointer;
+  font-family: var(--fuente-pixel); font-size: 0.5rem;
+  box-shadow: 2px 2px 0 #000; margin-left: auto;
+}
+.btn-csv:hover { border-color: var(--celeste); color: #fff; }
 
 .evento {
   background: var(--panel); border: 2px solid var(--borde-suave);

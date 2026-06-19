@@ -22,6 +22,7 @@ const TIPOS: Record<string, string> = {
   ais_gap_local: "Pérdida de señal AIS costera (detector propio)",
   encounter: "Encuentro entre buques",
   loitering: "Buque merodeando (loitering)",
+  reaparicion: "Reaparición de buque",
 };
 
 const ZONAS: Record<string, string> = {
@@ -32,13 +33,60 @@ const ZONAS: Record<string, string> = {
   FICZ: "FICZ",
 };
 
+const STORAGE_KEY = "soberana_eventos_acumulados";
+
+function cargarAcumulados(): Evento[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function guardarAcumulados(eventos: Evento[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(eventos));
+  } catch { /* quota exceeded: no-op, seguimos mostrando */ }
+}
+
+function fusionar(acumulados: Evento[], nuevos: Evento[]): Evento[] {
+  const ids = new Set(acumulados.map((e) => e.id));
+  const agregados = nuevos.filter((e) => !ids.has(e.id));
+  return [...acumulados, ...agregados];
+}
+
+function csvEscape(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v);
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function descargarCSV(eventos: Evento[]) {
+  const cols: Array<keyof Evento> = [
+    "id", "type", "src", "confidence", "mmsi", "vessel_name",
+    "flag", "lat", "lon", "started_at", "ended_at", "zone",
+  ];
+  const encabezado = cols.join(",");
+  const filas = eventos.map((e) => cols.map((c) => csvEscape(e[c])).join(","));
+  const csv = [encabezado, ...filas].join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `soberana_eventos_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
 function fecha(iso?: string | null): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" });
 }
 
 export default function EventLog() {
-  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [acumulados, setAcumulados] = useState<Evento[]>(cargarAcumulados);
   const [demo, setDemo] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState("");
   const [filtroZona, setFiltroZona] = useState("");
@@ -50,8 +98,13 @@ export default function EventLog() {
       try {
         const url = HAY_BACKEND ? `${API_URL}/api/events?limit=500` : "/data/events.json";
         const data = await fetch(url).then((r) => r.json());
-        setEventos(data.events ?? []);
-        setDemo(Boolean(data.demo) || (data.events ?? []).some((e: Evento) => e.demo));
+        const nuevos: Evento[] = data.events ?? [];
+        setDemo(Boolean(data.demo) || nuevos.some((e) => e.demo));
+        setAcumulados((prev) => {
+          const merged = fusionar(prev, nuevos);
+          guardarAcumulados(merged);
+          return merged;
+        });
       } catch {
         setError("No se pudo cargar el registro de eventos.");
       }
@@ -59,7 +112,7 @@ export default function EventLog() {
     cargar();
   }, []);
 
-  const filtrados = eventos.filter(
+  const filtrados = acumulados.filter(
     (e) => (!filtroTipo || e.type === filtroTipo) && (!filtroZona || e.zone === filtroZona),
   );
 
@@ -67,12 +120,13 @@ export default function EventLog() {
     <div className="log">
       <h2>Registro de eventos</h2>
       <p className="log-intro">
-        La memoria del proyecto: cada apagado de AIS, encuentro o merodeo detectado queda registrado acá, con
-        permalink. Los eventos de GFW llegan con <b>72 horas de retraso</b> (registro forense, no alerta táctica).
-        Un apagado de AIS <b>no implica por sí solo actividad ilegal</b>.
+        La memoria del proyecto: cada apagado de AIS, encuentro o merodeo detectado queda registrado acá,
+        con permalink. Los eventos de GFW llegan con <b>72 horas de retraso</b> (registro forense, no alerta
+        táctica). Un apagado de AIS <b>no implica por sí solo actividad ilegal</b>. El registro se acumula
+        localmente en tu navegador y nunca se borra.
       </p>
       {demo && (
-        <div className="banner-demo">⚠ Mostrando <b>datos de demostración</b>: no representan eventos reales.</div>
+        <div className="banner-demo">⚠ Incluye <b>datos de demostración</b>: no representan eventos reales.</div>
       )}
       {error && <div className="banner-demo">{error}</div>}
 
@@ -85,7 +139,14 @@ export default function EventLog() {
           <option value="">Todas las zonas</option>
           {Object.entries(ZONAS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <span className="conteo">{filtrados.length} eventos</span>
+        <span className="conteo">{filtrados.length} / {acumulados.length} eventos</span>
+        <button
+          className="btn-csv"
+          onClick={() => descargarCSV(acumulados)}
+          title="Descargar todos los eventos acumulados como CSV"
+        >
+          ⬇ CSV
+        </button>
       </div>
 
       <div className="eventos">
