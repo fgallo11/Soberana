@@ -193,7 +193,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
     const timers: number[] = [];
 
     map.on("load", async () => {
-      registerFlagImages(map);
+      try { registerFlagImages(map); } catch { /* banderas opcionales: no rompen el mapa */ }
 
       // ---------- capas estáticas (archivos en /data, regenerados por Actions) ----------
       map.addSource("zee", { type: "geojson", data: "/data/zee.geojson" });

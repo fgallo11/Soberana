@@ -160,7 +160,7 @@ const FLAGS: Record<string, FlagDef> = {
   JOR: { t: "h3", c: ["#007a3d", "#ffffff", "#000000"] },
 };
 
-function renderFlag(def: FlagDef): ImageData {
+function renderFlag(def: FlagDef): { width: number; height: number; data: Uint8ClampedArray } {
   const data = new Uint8ClampedArray(IW * IH * 4);
 
   const block = (gx: number, gy: number, rgb: RGB) => {
@@ -249,7 +249,7 @@ function renderFlag(def: FlagDef): ImageData {
   for (let gx = 0; gx < GW; gx++) { block(gx, 0, black); block(gx, GH - 1, black); }
   for (let gy = 0; gy < GH; gy++) { block(0, gy, black); block(GW - 1, gy, black); }
 
-  return new ImageData(data, IW, IH);
+  return { width: IW, height: IH, data };
 }
 
 export function registerFlagImages(map: MLMap) {
