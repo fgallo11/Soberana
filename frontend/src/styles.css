@@ -212,13 +212,6 @@ body {
   padding: 0.3rem 0.5rem; font-family: var(--fuente-term); font-size: 1rem;
 }
 .conteo { color: var(--texto-suave); font-size: 1rem; }
-.btn-csv {
-  background: #000; border: 2px solid var(--borde-suave); color: var(--celeste);
-  padding: 0.3rem 0.6rem; cursor: pointer;
-  font-family: var(--fuente-pixel); font-size: 0.5rem;
-  box-shadow: 2px 2px 0 #000; margin-left: auto;
-}
-.btn-csv:hover { border-color: var(--celeste); color: #fff; }
 
 .evento {
   background: var(--panel); border: 2px solid var(--borde-suave);
@@ -249,110 +242,52 @@ body {
 .metodologia a { color: var(--fosforo); }
 .metodologia b { color: var(--ambar); font-weight: normal; }
 
-/* ---------- barra de tiempo ---------- */
+/* ---------- barra de tiempo (videocasetera) ---------- */
 .mapa-zona { flex: 1; position: relative; display: flex; min-width: 0; }
-
-/* base posicionada (compartida) */
-.timebar,
-.timebar-min {
-  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
-  z-index: 10; width: min(740px, calc(100% - 24px));
-  background: rgba(11, 19, 13, 0.96); border: 2px solid var(--borde);
-  box-shadow: 4px 4px 0 #000;
-}
-
-/* expandido: columna de secciones */
 .timebar {
-  display: flex; flex-direction: column; gap: 0; padding: 0;
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  z-index: 10; width: min(620px, calc(100% - 24px));
+  background: rgba(11, 19, 13, 0.94); border: 2px solid var(--borde);
+  box-shadow: 4px 4px 0 #000; padding: 0.5rem 0.8rem;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 0.4rem 0.9rem; align-items: center;
 }
-
-/* ── minimizado: tira fina de 40 px ─────── */
-.timebar-min {
-  display: flex; flex-direction: row; align-items: center; gap: 0.5rem;
-  height: 40px; padding: 0 0.8rem; cursor: pointer;
-  overflow: hidden; white-space: nowrap;
-}
-.timebar-min:hover { border-color: var(--fosforo); }
-.tb-modo-mini {
-  font-family: var(--fuente-pixel); font-size: 0.48rem; flex-shrink: 0;
-}
-.tb-modo-mini.vivo { color: var(--rojo); }
-.tb-modo-mini.archivo { color: var(--ambar); }
-.tb-sep { color: var(--borde-suave); flex-shrink: 0; }
-.tb-fecha-mini { color: var(--texto); font-size: 0.9rem; flex-shrink: 0; }
-.tb-srcs-mini { color: var(--texto-suave); font-size: 0.85rem; flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.tb-toggle-min {
-  background: #000; border: 1px solid var(--borde-suave); color: var(--texto-suave);
-  font-family: var(--fuente-pixel); font-size: 0.48rem; padding: 0.25rem 0.5rem;
-  cursor: pointer; white-space: nowrap; flex-shrink: 0;
-}
-.tb-toggle-min:hover { color: var(--fosforo); border-color: var(--borde); }
-
-/* ── controles de fecha (fila 1) ────────── */
-.tb-controles {
-  display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;
-  padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--borde-suave);
-}
+.tb-controles { display: flex; gap: 0.35rem; align-items: center; }
 .tb-fecha-input {
   background: #000; color: var(--texto); border: 2px solid var(--borde-suave);
   font-family: var(--fuente-term); font-size: 0.95rem; padding: 0.22rem 0.3rem;
-  color-scheme: dark; flex: 1; min-width: 8rem;
+  color-scheme: dark;
 }
 .tb-fecha-input:hover { border-color: var(--borde); }
-.tb-controles button, .tb-btn-nav {
+.tb-controles button {
   background: #000; border: 2px solid var(--borde-suave); color: var(--texto-suave);
-  font-family: var(--fuente-pixel); font-size: 0.52rem; padding: 0.3rem 0.55rem; cursor: pointer;
+  font-family: var(--fuente-pixel); font-size: 0.55rem; padding: 0.32rem 0.5rem; cursor: pointer;
 }
-.tb-controles button:hover:not(:disabled),
-.tb-btn-nav:hover:not(:disabled) { color: var(--texto); border-color: var(--borde); }
-.tb-controles button:disabled,
-.tb-btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
-.tb-live { }
-.tb-live.activo {
-  color: #04140a !important; background: var(--rojo) !important; border-color: var(--rojo) !important;
+.tb-controles button:hover:not(:disabled) { color: var(--texto); border-color: var(--borde); }
+.tb-controles button:disabled { opacity: 0.35; cursor: not-allowed; }
+.tb-controles .tb-live.activo {
+  color: #04140a; background: var(--rojo); border-color: var(--rojo);
   animation: latido 1.6s ease-in-out infinite;
+}
+.tb-controles .tb-play.activo {
+  color: #04140a; background: var(--fosforo); border-color: var(--fosforo);
+  animation: latido 1.2s ease-in-out infinite;
 }
 @keyframes latido { 50% { filter: brightness(1.35); } }
 
-/* ── controles AIS: play + slider (fila 2) ─ */
-.tb-ais {
-  display: flex; flex-direction: column; gap: 0.3rem;
-  padding: 0.4rem 0.8rem; border-bottom: 1px solid var(--borde-suave);
+.timebar input[type="range"] {
+  width: 100%; accent-color: var(--fosforo); cursor: pointer; height: 1.1rem;
 }
-.tb-ais-prox { opacity: 0.55; }
-.tb-ais-controles { display: flex; gap: 0.4rem; align-items: center; }
-.tb-play { }
-.tb-play.activo {
-  color: #04140a !important; background: var(--fosforo) !important; border-color: var(--fosforo) !important;
-  animation: latido 1.2s ease-in-out infinite;
-}
-.tb-hora { font-size: 1.1rem; color: var(--texto); margin-left: 0.2rem; }
-.tb-ais input[type="range"] {
-  width: 100%; accent-color: var(--fosforo); cursor: pointer; height: 1rem;
-}
-.tb-ais-prox input[type="range"] { cursor: not-allowed; }
 
-/* ── panel de fuentes (fila 3) ─────────── */
-.tb-fuentes {
-  display: grid; grid-template-columns: 1.4rem auto 1fr; gap: 0.15rem 0.5rem;
-  align-items: center; padding: 0.45rem 0.8rem;
-  border-bottom: 1px solid var(--borde-suave); font-size: 0.9rem;
-}
-.tb-fuente { display: contents; }
-.tb-fuente-prox .tb-fuente-nombre,
-.tb-fuente-prox .tb-fuente-icono { opacity: 0.45; }
-.tb-fuente-icono { font-size: 0.85rem; justify-self: center; }
-.tb-fuente-nombre { color: var(--texto-suave); white-space: nowrap; }
-.tb-fuente-valor { color: var(--celeste); font-size: 0.85rem; }
-
-/* ── footer: modo + minimizar (fila 4) ─── */
-.tb-footer {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0.3rem 0.8rem;
-}
-.tb-modo { font-family: var(--fuente-pixel); font-size: 0.52rem; }
+.tb-estado { display: flex; flex-direction: column; align-items: flex-end; min-width: 150px; }
+.tb-modo { font-family: var(--fuente-pixel); font-size: 0.55rem; }
 .tb-modo.vivo { color: var(--rojo); animation: parpadeo 1.4s steps(1) infinite; }
 .tb-modo.archivo { color: var(--ambar); }
+.tb-fecha { font-size: 1rem; color: var(--texto); }
+
+.tb-nota {
+  grid-column: 1 / -1; font-size: 0.85rem; color: var(--texto-suave);
+  border-top: 1px dashed var(--borde-suave); padding-top: 0.3rem;
+}
 
 /* botón flotante para abrir el cajón de capas — solo móvil */
 .toggle-capas { display: none; }
@@ -412,17 +347,15 @@ body {
   .capa { padding: 0.6rem 0.35rem; }
   .capa input { transform: scale(1.25); margin-right: 0.7rem; }
 
-  /* barra de tiempo en móvil: ocupa todo el ancho, abajo */
-  .timebar, .timebar-min {
+  /* barra de tiempo: apila estado / controles / slider para que entre */
+  .timebar {
     left: 8px; right: 8px; bottom: 8px; transform: none; width: auto;
-  }
-  .tb-fuentes {
-    grid-template-columns: 1.2rem auto 1fr;
-    font-size: 0.82rem;
+    grid-template-columns: 1fr; gap: 0.45rem; padding: 0.5rem 0.6rem;
   }
   .tb-controles { flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
-  .tb-controles button, .tb-btn-nav { font-size: 0.48rem; padding: 0.4rem 0.45rem; }
-  .tb-fecha-input { font-size: 0.9rem; padding: 0.35rem 0.3rem; }
+  .tb-controles button { font-size: 0.5rem; padding: 0.45rem 0.55rem; }
+  .tb-fecha-input { flex: 1 1 8rem; font-size: 1rem; padding: 0.4rem 0.4rem; }
+  .tb-estado { align-items: center; min-width: 0; order: -1; }
 
   /* lectura cómoda en páginas de texto */
   .log, .metodologia { padding: 1rem 0.9rem 4rem; }

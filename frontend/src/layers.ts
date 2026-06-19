@@ -135,7 +135,7 @@ export const CAPAS: CapaDef[] = [
     descripcion:
       "En vivo: posiciones AIS de la Hidrovía y el litoral (requiere backend). En archivo: película del día — recorridos reconstruidos e interpolados. El AIS terrestre NO llega a la milla 201: lo que pasa allá se ve en las fotos satelitales.",
     badge: "en vivo",
-    mapLayers: ["ais-circle", "ais-flag", "ais-label"],
+    mapLayers: ["ais-circle", "ais-label"],
     defaultOn: false,
     proximamente: true,
   },

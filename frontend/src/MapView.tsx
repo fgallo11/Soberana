@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 import { API_URL, HAY_BACKEND, LIMITES, VISTA_INICIAL_BOUNDS, ZOOM_MAX, ZOOM_MIN } from "./config";
 import { CAPAS, idsProximamente } from "./layers";
 import { ESTILO_ESPIA } from "./map_style";
-import { registerFlagImages } from "./flagSprites";
 
 const FUENTE_TEXTO = ["Noto Sans Regular"];
 
@@ -193,8 +192,6 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
     const timers: number[] = [];
 
     map.on("load", async () => {
-      try { registerFlagImages(map); } catch { /* banderas opcionales: no rompen el mapa */ }
-
       // ---------- capas estáticas (archivos en /data, regenerados por Actions) ----------
       map.addSource("zee", { type: "geojson", data: "/data/zee.geojson" });
       map.addLayer({
@@ -651,19 +648,6 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
       map.addLayer({
         id: "ais-circle", type: "circle", source: "ais",
         paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 4, 8, 8, 12, 13], "circle-color": "#55efc4", "circle-stroke-color": "#0a3d2e", "circle-stroke-width": 1.5 },
-      });
-      map.addLayer({
-        id: "ais-flag", type: "symbol", source: "ais", minzoom: 5,
-        filter: ["!=", ["get", "flag"], null],
-        layout: {
-          "icon-image": ["concat", "flag-", ["get", "flag"]],
-          "icon-size": 1,
-          "icon-offset": [20, 0],
-          "icon-anchor": "left",
-          "icon-allow-overlap": true,
-          "icon-ignore-placement": true,
-          "icon-optional": true,
-        },
       });
       map.addLayer({
         id: "ais-label", type: "symbol", source: "ais", minzoom: 8,
