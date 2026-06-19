@@ -63,6 +63,7 @@ def ingerir_eventos(dias: int = 30) -> int:
     with _client() as client:
         for tipo, dataset in EVENT_DATASETS.items():
             offset = 0
+            tipo_total = 0
             while True:
                 resp = client.post(
                     "/events",
@@ -74,16 +75,26 @@ def ingerir_eventos(dias: int = 30) -> int:
                         "geometry": _region_geojson(),
                     },
                 )
-                resp.raise_for_status()
+                if resp.status_code != 200:
+                    log.warning("GFW %s (dataset=%s) HTTP %s: %s",
+                                tipo, dataset, resp.status_code, resp.text[:200])
+                    break
                 data = resp.json()
                 entries = data.get("entries", [])
+                tipo_total += len(entries)
                 if not entries:
+                    api_total = data.get("total", "?")
+                    log.info("GFW %s offset=%d: 0 entradas (total según API=%s)", tipo, offset, api_total)
                     break
                 total += _guardar_eventos(eng, tipo, entries)
                 if data.get("nextOffset") is None:
                     break
                 offset = data["nextOffset"]
-    log.info("eventos GFW ingeridos/actualizados: %d", total)
+            log.info("GFW %s: %d entradas descargadas (dataset=%s, rango=%s→%s)",
+                     tipo, tipo_total, dataset, desde, hasta)
+            if tipo_total == 0:
+                log.warning("GFW %s devolvió 0 eventos — token sin acceso o dataset incorrecto (esperado: %s)", tipo, dataset)
+    log.info("eventos GFW ingeridos/actualizados total: %d", total)
     _exportar_eventos_json()
     return total
 
@@ -219,15 +230,33 @@ def ingerir_sar(dias: int = 30) -> Path:
 
 
 def _exportar_eventos_json() -> None:
-    """Snapshot del log de eventos para el frontend en modo estático."""
+    """Snapshot balanceado por tipo para el frontend en modo estático.
+    Toma los N más recientes de cada tipo para que ningún tipo se coma el cupo."""
     from ..db import list_events
-    rows = list_events(limit=500)
+    POR_TIPO = 300
+    tipos = list(EVENT_DATASETS.keys())
+    vistos: set[str] = set()
+    rows: list[dict] = []
+    for tipo in tipos:
+        for r in list_events(type_=tipo, limit=POR_TIPO):
+            if r["id"] not in vistos:
+                vistos.add(r["id"])
+                rows.append(r)
+    # también incluir eventos de otras fuentes (ais_gap_local, reaparicion, etc.)
+    for r in list_events(limit=POR_TIPO):
+        if r["id"] not in vistos:
+            vistos.add(r["id"])
+            rows.append(r)
+    rows.sort(key=lambda r: r.get("started_at") or "", reverse=True)
     for r in rows:
         for k in ("started_at", "ended_at"):
             if r.get(k) is not None and hasattr(r[k], "isoformat"):
                 r[k] = r[k].isoformat()
     out = Path(settings.data_dir) / "events.json"
     out.parent.mkdir(parents=True, exist_ok=True)
+    from collections import Counter
+    conteo = dict(Counter(r.get("type") for r in rows))
+    log.info("exportando events.json: %d eventos %s", len(rows), conteo)
     out.write_text(json.dumps({"generado": utcnow().isoformat(), "demo": False, "events": rows}, ensure_ascii=False, default=str))
 
 
