@@ -46,7 +46,7 @@ export default function App() {
             [ EVENTOS ]
           </button>
           <button className={pestania === "metodologia" ? "activa" : ""} onClick={() => setPestania("metodologia")}>
-            [ PRÓXIMAMENTE ]
+            [ QUÉ ESTÁS VIENDO ]
           </button>
           <button
             className={`tab-colaborar ${pestania === "colaborar" ? "activa" : ""}`}
