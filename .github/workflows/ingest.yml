@@ -8,7 +8,7 @@ name: Ingesta de datos
 
 on:
   schedule:
-    - cron: "20 8 * * *"   # una vez al día a las 08:20 UTC (datos GFW tienen ~72h latencia; SAR ~5 días)
+    - cron: "20 */6 * * *"   # cada 6 horas
   workflow_dispatch:
 
 permissions:
