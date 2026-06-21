@@ -621,7 +621,7 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addLayer({
           id: "alarmas-halo", type: "circle", source: "alarmas",
           paint: {
-            "circle-radius": 11,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 13, 8, 17, 12, 22],
             "circle-color": "transparent",
             "circle-stroke-width": 1.5,
             "circle-stroke-color": colorRiesgo,
@@ -631,18 +631,23 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
         map.addLayer({
           id: "alarmas-circle", type: "circle", source: "alarmas",
           paint: {
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 5, 8, 9, 12, 14],
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 5, 8, 7, 12, 10],
             "circle-color": colorRiesgo,
             "circle-stroke-color": "#000",
             "circle-stroke-width": 1,
           },
         });
-        // latido de radar: el halo pulsa para llamar la atención sin sonido
+        // latido de radar: el halo pulsa; expresión zoom-aware para que el halo
+        // sea siempre mayor que el círculo interno independientemente del zoom.
         let creciendo = true;
         timers.push(window.setInterval(() => {
           if (!map.getLayer("alarmas-halo")) return;
           creciendo = !creciendo;
-          map.setPaintProperty("alarmas-halo", "circle-radius", creciendo ? 14 : 9);
+          map.setPaintProperty("alarmas-halo", "circle-radius",
+            creciendo
+              ? (["interpolate", ["linear"], ["zoom"], 4, 18, 8, 24, 12, 30] as maplibregl.ExpressionSpecification)
+              : (["interpolate", ["linear"], ["zoom"], 4, 13, 8, 17, 12, 22] as maplibregl.ExpressionSpecification),
+          );
         }, 700));
       } catch { /* sin eventos disponibles: capa ausente */ }
 
