@@ -75,7 +75,7 @@ def ingerir_eventos(dias: int = 30) -> int:
                         "geometry": _region_geojson(),
                     },
                 )
-                if resp.status_code != 200:
+                if not resp.is_success:
                     log.warning("GFW %s (dataset=%s) HTTP %s: %s",
                                 tipo, dataset, resp.status_code, resp.text[:200])
                     break
