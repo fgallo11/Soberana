@@ -114,7 +114,7 @@ export const CAPAS: CapaDef[] = [
     descripcion:
       "Última posición conocida de buques que dejaron de transmitir. Naranja: alta confianza (GFW, apagado intencional, 72 hs de retraso). Gris: pérdida de señal costera (detector propio, causas posibles inocentes). Detalle completo en la pestaña Registro de eventos.",
     badge: "72 h",
-    mapLayers: ["alarmas-halo", "alarmas-circle"],
+    mapLayers: ["alarmas-track-line", "alarmas-halo", "alarmas-circle"],
     defaultOn: true,
   },
   {

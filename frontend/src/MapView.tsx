@@ -580,34 +580,87 @@ export default function MapView({ visibles, tiempo, onSelect }: Props) {
           return { nivel, etiqueta, indicadores: ind };
         }
 
+        const alarmasGaps = todosEventos
+          .filter((e: any) => e.lat != null && e.lon != null && e.type.startsWith("ais_gap"));
+
+        // Agrupar por MMSI para detectar reincidentes y construir aristas
+        const porMmsi = new Map<string, { e: any; r: ReturnType<typeof analizarRiesgo> }[]>();
+        for (const e of alarmasGaps) {
+          const key = e.mmsi ? String(e.mmsi) : `_nommsi_${e.id}`;
+          if (!porMmsi.has(key)) porMmsi.set(key, []);
+          porMmsi.get(key)!.push({ e, r: analizarRiesgo(e) });
+        }
+
+        const RIESGO_ORD: Record<string, number> = { alto: 3, medio: 2, bajo: 1, "": 0 };
+
+        // Aristas: LineString entre puntos del mismo buque (orden cronológico)
+        const trackFeatures: any[] = [];
+        for (const items of porMmsi.values()) {
+          if (items.length < 2) continue;
+          const sorted = [...items].sort((a, b) =>
+            (a.e.started_at ?? "") < (b.e.started_at ?? "") ? -1 : 1,
+          );
+          const nivelMax = sorted.reduce((best, { r }) =>
+            RIESGO_ORD[r.nivel] > RIESGO_ORD[best] ? r.nivel : best, "");
+          trackFeatures.push({
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: sorted.map(({ e }) => [e.lon, e.lat]),
+            },
+            properties: {
+              riesgo_nivel: nivelMax,
+              dia_max: (sorted.at(-1)!.e.started_at ?? "").slice(0, 10),
+            },
+          });
+        }
+
+        map.addSource("alarmas-track", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: trackFeatures },
+        });
+        map.addLayer({
+          id: "alarmas-track-line", type: "line", source: "alarmas-track",
+          paint: {
+            "line-color": [
+              "case",
+              ["==", ["get", "riesgo_nivel"], "alto"],  "#ff3b30",
+              ["==", ["get", "riesgo_nivel"], "medio"], "#ff9f1a",
+              ["==", ["get", "riesgo_nivel"], "bajo"],  "#ffd166",
+              "#9aa7b3",
+            ],
+            "line-width": 1.5,
+            "line-opacity": 0.5,
+            "line-dasharray": [3, 3],
+          },
+        });
+
         map.addSource("alarmas", {
           type: "geojson",
           data: {
             type: "FeatureCollection",
-            features: todosEventos
-              .filter((e: any) => e.lat != null && e.lon != null && e.type.startsWith("ais_gap"))
-              .map((e: any) => {
-                const r = analizarRiesgo(e);
-                return {
-                  type: "Feature",
-                  geometry: { type: "Point", coordinates: [e.lon, e.lat] },
-                  properties: {
-                    id: e.id,
-                    vessel: e.vessel_name || (e.mmsi ? `MMSI ${e.mmsi}` : "no identificado"),
-                    flag: e.flag,
-                    confianza: e.confidence,
-                    inicio: e.started_at,
-                    fin: e.ended_at,
-                    dia: (e.started_at ?? "").slice(0, 10),
-                    demo: Boolean(e.demo),
-                    riesgo_nivel: r.nivel,
-                    riesgo_etiqueta: r.etiqueta,
-                    riesgo_indicadores: JSON.stringify(r.indicadores),
-                    dist_puerto_km: e.raw?.distances?.startDistanceFromPortKm ?? null,
-                    dist_costa_km: e.raw?.distances?.startDistanceFromShoreKm ?? null,
-                  },
-                };
-              }),
+            features: alarmasGaps.map((e: any) => {
+              const r = analizarRiesgo(e);
+              return {
+                type: "Feature",
+                geometry: { type: "Point", coordinates: [e.lon, e.lat] },
+                properties: {
+                  id: e.id,
+                  vessel: e.vessel_name || (e.mmsi ? `MMSI ${e.mmsi}` : "no identificado"),
+                  flag: e.flag,
+                  confianza: e.confidence,
+                  inicio: e.started_at,
+                  fin: e.ended_at,
+                  dia: (e.started_at ?? "").slice(0, 10),
+                  demo: Boolean(e.demo),
+                  riesgo_nivel: r.nivel,
+                  riesgo_etiqueta: r.etiqueta,
+                  riesgo_indicadores: JSON.stringify(r.indicadores),
+                  dist_puerto_km: e.raw?.distances?.startDistanceFromPortKm ?? null,
+                  dist_costa_km: e.raw?.distances?.startDistanceFromShoreKm ?? null,
+                },
+              };
+            }),
           },
         });
 
@@ -967,6 +1020,10 @@ function aplicarFecha(map: MLMap, fecha: string | null) {
     const f = fecha ? ["==", ["get", "dia"], fecha] : null;
     map.setFilter("alarmas-circle", f as any);
     map.setFilter("alarmas-halo", f as any);
+    // aristas: en modo archivo solo las del buque cuyo último gap fue ese día
+    if (map.getLayer("alarmas-track-line")) {
+      map.setFilter("alarmas-track-line", fecha ? ["==", ["get", "dia_max"], fecha] as any : null);
+    }
   }
   if (HAY_BACKEND && map.getSource("gfw-pesca")) {
     const src = map.getSource("gfw-pesca") as maplibregl.RasterTileSource;
