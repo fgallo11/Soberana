@@ -10,6 +10,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Soberana is a public map of Argentine sovereignty monitoring across maritime, riverine, and aerial domains. It combines open data (AIS, SAR, VIIRS, ADS-B) with no login, no ads, and zero operational cost. Every data layer declares its latency honestly; events are evidence for investigation, never accusations.
 
+## Integridad de datos — regla absoluta
+
+**Nunca es solución a un problema de datos el agregar datos inventados.**
+
+Lo fundamental, siempre, es que lo que se muestra sea simple y verdadero. Mostrar algo falso nunca es preferible a no mostrar nada. Si una capa no tiene datos reales disponibles:
+
+- La capa aparece vacía o ausente, con una etiqueta honesta ("sin datos", "próximamente", "requiere token").
+- Nunca se puebla con datos de `demo_data.py` ni con valores sintéticos salvo en entornos de desarrollo explícitamente marcados como tales y donde el usuario lo haya pedido.
+- Si los datos reales desaparecen (p. ej. por un cron que sobreescribe con lista vacía), la solución es restaurar desde el último commit válido e investigar la causa raíz — no rellenar con ficción.
+
+`demo_data.py` existe únicamente para tests locales y desarrollo. Sus salidas no deben commitearse a `main` ni desplegarse en producción.
+
 ## Commands
 
 ### Frontend
