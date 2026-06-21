@@ -257,6 +257,9 @@ def _exportar_eventos_json() -> None:
     from collections import Counter
     conteo = dict(Counter(r.get("type") for r in rows))
     log.info("exportando events.json: %d eventos %s", len(rows), conteo)
+    if not rows:
+        log.warning("eventos: 0 resultados — se conserva el events.json existente (demo o datos previos)")
+        return
     out.write_text(json.dumps({"generado": utcnow().isoformat(), "demo": False, "events": rows}, ensure_ascii=False, default=str))
 
 
