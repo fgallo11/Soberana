@@ -211,9 +211,6 @@ def ingerir_sar(dias: int = 30) -> Path:
 
     out = Path(settings.data_dir) / "sar_detections.geojson"
     out.parent.mkdir(parents=True, exist_ok=True)
-    if not features:
-        log.warning("SAR: 0 detecciones — se conserva el sar_detections.geojson existente")
-        return out
     out.write_text(json.dumps({
         "type": "FeatureCollection",
         "metadata": {
@@ -256,35 +253,9 @@ def _exportar_eventos_json() -> None:
             if r.get(k) is not None and hasattr(r[k], "isoformat"):
                 r[k] = r[k].isoformat()
 
+    rows.sort(key=lambda r: r.get("started_at") or "", reverse=True)
     out = Path(settings.data_dir) / "events.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-
-    # Si la corrida devolvió 0 ais_gap pero el archivo existente tiene, conservarlos.
-    # Causa habitual: rate limit o acceso suspendido al dataset de gaps en GFW.
-    nuevos_gaps = sum(1 for r in rows if r.get("type", "").startswith("ais_gap"))
-    if nuevos_gaps == 0 and out.exists():
-        try:
-            existente = json.loads(out.read_text())
-            gaps_previos = [
-                e for e in existente.get("events", [])
-                if e.get("type", "").startswith("ais_gap") and not e.get("demo")
-            ]
-            if gaps_previos:
-                log.warning(
-                    "ais_gap: 0 en esta corrida vs %d en el archivo existente — "
-                    "probable rate limit de GFW; se conservan los apagones anteriores",
-                    len(gaps_previos),
-                )
-                ids_ya = {r["id"] for r in rows}
-                rows.extend(g for g in gaps_previos if g["id"] not in ids_ya)
-        except Exception as exc:
-            log.warning("No se pudo leer events.json existente para preservar gaps: %s", exc)
-
-    if not rows:
-        log.warning("eventos: 0 resultados — se conserva el events.json existente")
-        return
-
-    rows.sort(key=lambda r: r.get("started_at") or "", reverse=True)
     conteo = dict(Counter(r.get("type") for r in rows))
     log.info("exportando events.json: %d eventos %s", len(rows), conteo)
     out.write_text(json.dumps({"generado": utcnow().isoformat(), "demo": False, "events": rows}, ensure_ascii=False, default=str))
