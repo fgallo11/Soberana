@@ -211,6 +211,9 @@ def ingerir_sar(dias: int = 30) -> Path:
 
     out = Path(settings.data_dir) / "sar_detections.geojson"
     out.parent.mkdir(parents=True, exist_ok=True)
+    if not features:
+        log.warning("SAR: 0 detecciones — se conserva el sar_detections.geojson existente")
+        return out
     out.write_text(json.dumps({
         "type": "FeatureCollection",
         "metadata": {
